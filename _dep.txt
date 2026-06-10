@@ -1,0 +1,20 @@
+﻿node.exe : Vercel CLI 54.11.1 (Node.js 24.15.0)
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Vercel CLI 54.11.1 (Node.js 24.15 
+   .0):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Retrieving projectΓÇª
+Deploying imleviis-projects/paul-vite-estates
+Uploading [--------------------] (0.0B/1.1MB)
+Uploading [=====---------------] (296.0KB/1.1MB)
+Uploading [==========----------] (584.0KB/1.1MB)
+Uploading [===============-----] (888.0KB/1.1MB)
+Uploading [====================] (1.1MB/1.1MB)
+  Inspect     https://vercel.com/imleviis-projects/paul-vite-estates/A1rESSgPn6
+X5UcAMQUfF1FkSWyn2
+Γû▓ Production  
+https://paul-vite-estates-9yyrd7qsc-imleviis-projects.vercel.app
+BuildingΓÇª
