@@ -23,7 +23,7 @@ export function AdminSettings() {
   async function handleSave() {
     setSaving(true)
     try {
-      saveSettings(settings)
+      await saveSettings(settings)
       toast.success('Settings saved successfully')
     } catch {
       toast.error('Failed to save settings')

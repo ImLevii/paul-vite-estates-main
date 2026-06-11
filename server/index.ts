@@ -378,6 +378,33 @@ app.get('/api/nav-links', async (c) => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Site settings (single-row JSON blob). DB-backed so branding / hero text /
+// footer / payment config sync across every device and visitor.
+// ─────────────────────────────────────────────────────────────────────────────
+
+let siteSettingsReady = false
+async function ensureSiteSettingsTable() {
+  if (siteSettingsReady) return
+  await db.unsafe(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      id          SMALLINT PRIMARY KEY DEFAULT 1,
+      data        JSONB NOT NULL DEFAULT '{}'::jsonb,
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      CONSTRAINT site_settings_single_row CHECK (id = 1)
+    )
+  `)
+  siteSettingsReady = true
+}
+
+app.get('/api/settings', async (c) => {
+  await ensureSiteSettingsTable()
+  const [row] = await db<{ data: Record<string, unknown> }[]>`
+    SELECT data FROM site_settings WHERE id = 1
+  `
+  return c.json(row?.data ?? {})
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Admin: Auth
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -421,6 +448,25 @@ app.get('/api/admin/me', jwt({ secret: JWT_SECRET, alg: 'HS256' }), async (c) =>
 
 // Protect all remaining admin routes with JWT
 app.use('/api/admin/*', jwt({ secret: JWT_SECRET, alg: 'HS256' }))
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin: Site settings
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.patch('/api/admin/settings', async (c) => {
+  if (getRole(c) !== 'admin') return c.json({ error: 'Forbidden' }, 403)
+  await ensureSiteSettingsTable()
+  const body = await c.req.json<Record<string, unknown>>()
+  const json = db.json(body as Parameters<typeof db.json>[0])
+  const [row] = await db<{ data: Record<string, unknown> }[]>`
+    INSERT INTO site_settings (id, data, updated_at)
+    VALUES (1, ${json}, now())
+    ON CONFLICT (id) DO UPDATE
+      SET data = site_settings.data || ${json}, updated_at = now()
+    RETURNING data
+  `
+  return c.json(row.data)
+})
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin: Property Types

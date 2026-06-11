@@ -1,9 +1,13 @@
 /**
- * Shared admin/site settings persisted in localStorage. Both the admin
- * Settings page and the public site (e.g. the header branding) read from here,
- * and changes propagate live to all open tabs and the current one.
+ * Shared admin/site settings. The database is the source of truth (so settings
+ * sync across every device and visitor), with localStorage used as an instant
+ * paint cache + offline fallback. Changes propagate live to all open tabs and
+ * the current one, and the cache is refreshed from the server on mount, focus,
+ * cross-tab broadcast, and a periodic poll.
  */
 import { useSyncExternalStore } from 'react'
+import { api } from '@/lib/api'
+import { onDataChanged } from '@/lib/data-sync'
 
 export const SETTINGS_KEY = 'haven_admin_settings'
 
@@ -52,10 +56,80 @@ export function loadSettings(): Settings {
   return DEFAULT_SETTINGS
 }
 
-export function saveSettings(settings: Settings): void {
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
-  // Notify the current tab (storage events only fire in *other* tabs).
+export async function saveSettings(settings: Settings): Promise<void> {
+  writeLocal(settings)
+  await api.admin.settings.update(settings as unknown as Record<string, unknown>)
+}
+
+/** Write to the local cache and notify the current tab + other tabs. */
+function writeLocal(settings: Settings): void {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+  } catch {
+    /* ignore */
+  }
+  // Storage events only fire in *other* tabs, so dispatch our own for this one.
   window.dispatchEvent(new Event(EVENT_NAME))
+}
+
+/**
+ * Fetch the latest settings from the server and update the local cache if they
+ * changed. De-duplicates concurrent calls. Never throws (network errors leave
+ * the cached values in place).
+ */
+let inflight: Promise<void> | null = null
+export function refreshSettings(): Promise<void> {
+  if (inflight) return inflight
+  inflight = api.settings
+    .get()
+    .then(data => {
+      const merged: Settings = { ...DEFAULT_SETTINGS, ...(data as Partial<Settings>) }
+      const raw = JSON.stringify(merged)
+      let current: string | null = null
+      try {
+        current = localStorage.getItem(SETTINGS_KEY)
+      } catch {
+        /* ignore */
+      }
+      if (raw !== current) {
+        try {
+          localStorage.setItem(SETTINGS_KEY, raw)
+        } catch {
+          /* ignore */
+        }
+        window.dispatchEvent(new Event(EVENT_NAME))
+      }
+    })
+    .catch(() => {
+      /* keep cached values */
+    })
+    .finally(() => {
+      inflight = null
+    })
+  return inflight
+}
+
+// ── Server-refresh lifecycle, shared across all hook consumers (refcounted) ──
+let subscribers = 0
+let teardownGlobal: (() => void) | null = null
+
+function startGlobal(): () => void {
+  refreshSettings()
+  const onVisible = () => {
+    if (document.visibilityState === 'visible') refreshSettings()
+  }
+  const offData = onDataChanged(refreshSettings)
+  document.addEventListener('visibilitychange', onVisible)
+  window.addEventListener('focus', refreshSettings)
+  const timer = window.setInterval(() => {
+    if (document.visibilityState === 'visible') refreshSettings()
+  }, 30000)
+  return () => {
+    offData()
+    document.removeEventListener('visibilitychange', onVisible)
+    window.removeEventListener('focus', refreshSettings)
+    window.clearInterval(timer)
+  }
 }
 
 function subscribe(listener: () => void): () => void {
@@ -64,9 +138,18 @@ function subscribe(listener: () => void): () => void {
   }
   window.addEventListener(EVENT_NAME, listener)
   window.addEventListener('storage', handleStorage)
+
+  subscribers += 1
+  if (subscribers === 1) teardownGlobal = startGlobal()
+
   return () => {
     window.removeEventListener(EVENT_NAME, listener)
     window.removeEventListener('storage', handleStorage)
+    subscribers -= 1
+    if (subscribers === 0 && teardownGlobal) {
+      teardownGlobal()
+      teardownGlobal = null
+    }
   }
 }
 

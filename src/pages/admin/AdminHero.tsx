@@ -78,14 +78,22 @@ export function AdminHero() {
     slogan.footerTagline !== settings.footerTagline ||
     slogan.footerNote !== settings.footerNote
 
-  function saveHeadline() {
-    saveSettings({ ...(settings as Settings), ...headline })
-    toast.success('Headline updated')
+  async function saveHeadline() {
+    try {
+      await saveSettings({ ...(settings as Settings), ...headline })
+      toast.success('Headline updated')
+    } catch {
+      toast.error('Failed to update headline')
+    }
   }
 
-  function saveSlogan() {
-    saveSettings({ ...(settings as Settings), ...slogan })
-    toast.success('Slogan updated')
+  async function saveSlogan() {
+    try {
+      await saveSettings({ ...(settings as Settings), ...slogan })
+      toast.success('Slogan updated')
+    } catch {
+      toast.error('Failed to update slogan')
+    }
   }
 
   useEffect(() => { loadSlides() }, [])

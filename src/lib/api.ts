@@ -130,6 +130,10 @@ export const api = {
     list: () => get<NavLink[]>('/nav-links'),
   },
 
+  settings: {
+    get: () => get<Record<string, unknown>>('/settings'),
+  },
+
   properties: {
     list: (params?: { active?: boolean; type?: string; sort?: string }) =>
       get<Property[]>('/properties', {
@@ -152,6 +156,11 @@ export const api = {
       req<{ token: string; role: AdminRole }>('POST', '/admin/login', data),
 
     me: () => get<{ username: string; role: AdminRole }>('/admin/me'),
+
+    settings: {
+      update: (data: Record<string, unknown>) =>
+        req<Record<string, unknown>>('PATCH', '/admin/settings', data),
+    },
 
     propertyTypes: {
       list: () => get<PropertyType[]>('/admin/property-types'),
