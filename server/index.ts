@@ -902,6 +902,26 @@ app.patch('/api/admin/bookings/:id', async (c) => {
   return c.json(booking)
 })
 
+app.delete('/api/admin/bookings/:id', async (c) => {
+  const { id } = c.req.param()
+  const [deleted] = await db<Booking[]>`DELETE FROM bookings WHERE id = ${id} RETURNING id`
+  if (!deleted) return c.json({ error: 'Not found' }, 404)
+  return c.json({ ok: true })
+})
+
+// Reset revenue: clear paid/authorized markers so computed revenue resets to $0.
+// Bookings themselves are kept; only their payment_status is reset to 'unpaid'.
+app.post('/api/admin/revenue/reset', async (c) => {
+  if (getRole(c) !== 'admin') return c.json({ error: 'Forbidden' }, 403)
+  const rows = await db<{ id: string }[]>`
+    UPDATE bookings
+    SET payment_status = 'unpaid', updated_at = ${new Date().toISOString()}
+    WHERE payment_status IN ('paid', 'authorized')
+    RETURNING id
+  `
+  return c.json({ ok: true, updated: rows.length })
+})
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin: Hero Slides
 // ─────────────────────────────────────────────────────────────────────────────

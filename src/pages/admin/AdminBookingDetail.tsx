@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
-import { ChevronLeft, CalendarDays, User, CreditCard, Home, Clock, FileText } from 'lucide-react'
+import { useParams, useNavigate, Link } from 'react-router-dom'
+import { ChevronLeft, CalendarDays, User, CreditCard, Home, Clock, FileText, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { type Booking, type Property } from '@/lib/supabase'
 import { api } from '@/lib/api'
 import { BOOKING_STATUSES, PAYMENT_STATUSES } from '@/lib/constants'
@@ -15,9 +19,11 @@ import { toast } from 'sonner'
 
 export function AdminBookingDetail() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const [booking, setBooking] = useState<Booking | null>(null)
   const [property, setProperty] = useState<Property | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   useEffect(() => {
     if (id) loadBooking(id)
@@ -33,6 +39,18 @@ export function AdminBookingDetail() {
       setProperty(null)
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleDelete() {
+    if (!id) return
+    try {
+      await api.admin.bookings.delete(id)
+      toast.success('Booking deleted')
+      navigate('/admin/bookings', { replace: true })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete booking')
+      setDeleteOpen(false)
     }
   }
 
@@ -79,6 +97,14 @@ export function AdminBookingDetail() {
           <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">Booking Details</h1>
           <p className="truncate font-mono text-xs text-muted-foreground">{booking.id}</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto shrink-0 text-destructive hover:text-destructive"
+          onClick={() => setDeleteOpen(true)}
+        >
+          <Trash2 className="size-4" /> <span className="hidden sm:inline">Delete</span>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -263,6 +289,23 @@ export function AdminBookingDetail() {
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the booking and its revenue from your records. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

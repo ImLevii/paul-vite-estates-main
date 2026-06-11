@@ -1,16 +1,22 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Search, CalendarDays, ArrowRight, Filter } from 'lucide-react'
+import { Search, CalendarDays, ArrowRight, Filter, Trash2, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { type Booking } from '@/lib/supabase'
 import { api, type BookingWithProperty } from '@/lib/api'
 import { BOOKING_STATUSES, PAYMENT_STATUSES } from '@/lib/constants'
+import { getAdminRole } from '@/lib/admin-auth'
 import { format, parseISO } from 'date-fns'
+import { toast } from 'sonner'
 
 type BookingRow = BookingWithProperty
 
@@ -19,6 +25,9 @@ export function AdminBookings() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [resetOpen, setResetOpen] = useState(false)
+  const isAdmin = getAdminRole() === 'admin'
 
   useEffect(() => {
     loadData()
@@ -36,6 +45,31 @@ export function AdminBookings() {
       setBookings(bs => bs.map(b => b.id === id ? { ...b, status: status as Booking['status'] } : b))
     } catch {
       // silently ignore
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteId) return
+    try {
+      await api.admin.bookings.delete(deleteId)
+      setBookings(bs => bs.filter(b => b.id !== deleteId))
+      toast.success('Booking deleted')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete booking')
+    } finally {
+      setDeleteId(null)
+    }
+  }
+
+  async function handleResetRevenue() {
+    try {
+      const { updated } = await api.admin.bookings.resetRevenue()
+      toast.success(updated > 0 ? `Revenue reset — ${updated} booking${updated === 1 ? '' : 's'} marked unpaid` : 'No revenue to reset')
+      await loadData()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to reset revenue')
+    } finally {
+      setResetOpen(false)
     }
   }
 
@@ -59,11 +93,21 @@ export function AdminBookings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">Bookings</h1>
           <p className="text-sm text-muted-foreground">{bookings.length} total reservations</p>
         </div>
+        {isAdmin && (
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => setResetOpen(true)}
+            disabled={stats.revenue === 0}
+          >
+            <RotateCcw className="size-4" /> Reset Revenue
+          </Button>
+        )}
       </div>
 
       {/* Stats row */}
@@ -171,6 +215,15 @@ export function AdminBookings() {
                             Details <ArrowRight className="size-3" />
                           </Link>
                         </Button>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => setDeleteId(booking.id)}
+                          title="Delete booking"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -180,6 +233,41 @@ export function AdminBookings() {
           })}
         </div>
       )}
+
+      <AlertDialog open={!!deleteId} onOpenChange={open => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete booking?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes the booking and its revenue from your records. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset revenue data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This marks every paid and authorized booking as <strong>unpaid</strong>, resetting reported
+              revenue to $0. The bookings themselves are kept. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetRevenue} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Reset Revenue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

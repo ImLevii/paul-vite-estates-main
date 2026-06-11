@@ -225,6 +225,8 @@ export const api = {
         })),
       update: (id: string, data: { status?: string; payment_status?: string }) =>
         req<Booking>('PATCH', `/admin/bookings/${id}`, data).then(normalizeBooking),
+      delete: (id: string) => req<{ ok: boolean }>('DELETE', `/admin/bookings/${id}`),
+      resetRevenue: () => req<{ ok: boolean; updated: number }>('POST', '/admin/revenue/reset'),
     },
 
     heroSlides: {
