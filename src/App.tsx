@@ -20,11 +20,24 @@ import { AdminHero } from '@/pages/admin/AdminHero'
 import { AdminSettings } from '@/pages/admin/AdminSettings'
 
 export default function App() {
-  const { siteName } = useSettings()
+  const { siteName, heroSubtitle } = useSettings()
 
   useEffect(() => {
-    document.title = `${siteName} — Premium Stays`
-  }, [siteName])
+    const title = `${siteName} — Premium Stays`
+    const description = heroSubtitle
+    document.title = title
+
+    const setMeta = (selector: string, attr: string, value: string) => {
+      const el = document.head.querySelector<HTMLMetaElement>(selector)
+      if (el) el.setAttribute(attr, value)
+    }
+    setMeta('meta[name="description"]', 'content', description)
+    setMeta('meta[property="og:site_name"]', 'content', siteName)
+    setMeta('meta[property="og:title"]', 'content', title)
+    setMeta('meta[property="og:description"]', 'content', description)
+    setMeta('meta[name="twitter:title"]', 'content', title)
+    setMeta('meta[name="twitter:description"]', 'content', description)
+  }, [siteName, heroSubtitle])
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="haven-theme">

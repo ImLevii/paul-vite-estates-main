@@ -15,6 +15,8 @@ export const DEFAULT_SETTINGS = {
   heroTitle: 'Find Your Perfect',
   heroTitleAccent: 'Escape',
   heroSubtitle: 'Discover handpicked rentals from cozy lakeside cabins to beachfront villas. Book with confidence.',
+  footerTagline: 'Discover extraordinary places to stay. From cozy cabins to luxury villas, find your perfect getaway.',
+  footerNote: 'Crafted with precision.',
   currency: 'USD',
   defaultServiceFee: '12',
   defaultCleaningFee: '50',

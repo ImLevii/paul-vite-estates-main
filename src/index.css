@@ -1051,4 +1051,144 @@
   .footer-link:hover::after {
     transform: scaleX(1);
   }
+
+  /* ============================================================
+     PREMIUM ADMIN LOGIN  (cinematic obsidian, brand crest)
+     ============================================================ */
+  .login-premium {
+    background:
+      radial-gradient(140% 120% at 22% -10%,
+        oklch(0.24 0.01 270) 0%,
+        oklch(0.15 0.008 270) 52%,
+        oklch(0.09 0.006 270) 100%);
+    color: oklch(0.96 0.004 270);
+  }
+  /* drifting metallic aurora wash */
+  .login-aurora {
+    background:
+      radial-gradient(40% 50% at 78% 18%, color-mix(in oklab, oklch(0.7 0.04 250) 14%, transparent), transparent 70%),
+      radial-gradient(46% 46% at 16% 88%, color-mix(in oklab, oklch(0.78 0.05 90) 12%, transparent), transparent 72%);
+    opacity: 0.8;
+  }
+  .login-orb {
+    width: 26rem;
+    height: 26rem;
+    border-radius: 9999px;
+    filter: blur(80px);
+  }
+  .login-orb-a {
+    top: -7rem;
+    right: -7rem;
+    background: radial-gradient(circle, color-mix(in oklab, white 8%, transparent), transparent 70%);
+  }
+  .login-orb-b {
+    bottom: -8rem;
+    left: -8rem;
+    background: radial-gradient(circle, color-mix(in oklab, oklch(0.8 0.04 90) 10%, transparent), transparent 70%);
+  }
+  .login-back {
+    color: oklch(0.7 0.012 270);
+  }
+  .login-back:hover {
+    color: oklch(0.96 0.004 270);
+  }
+  /* carbon-glass card with platinum hairline */
+  .login-card {
+    isolation: isolate;
+    background:
+      radial-gradient(130% 130% at 25% 0%,
+        oklch(0.27 0.01 270) 0%,
+        oklch(0.18 0.008 270) 52%,
+        oklch(0.12 0.006 270) 100%);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    border: 1px solid color-mix(in oklab, white 12%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 14%, transparent) inset,
+      0 -2px 4px 0 color-mix(in oklab, black 55%, transparent) inset,
+      0 30px 70px -28px color-mix(in oklab, black 80%, transparent);
+  }
+  .login-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      repeating-linear-gradient(45deg,
+        color-mix(in oklab, white 4%, transparent) 0 1px,
+        transparent 1px 5px);
+    opacity: 0.55;
+    mask-image: linear-gradient(180deg, black, transparent 70%);
+    -webkit-mask-image: linear-gradient(180deg, black, transparent 70%);
+  }
+  .login-card::after {
+    content: '';
+    position: absolute;
+    inset-inline: 14%;
+    top: -1px;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg,
+      transparent,
+      color-mix(in oklab, white 18%, transparent) 22%,
+      color-mix(in oklab, white 48%, transparent) 50%,
+      color-mix(in oklab, white 18%, transparent) 78%,
+      transparent);
+    opacity: 0.75;
+  }
+  /* obsidian crest plinth */
+  .login-crest {
+    background:
+      radial-gradient(140% 140% at 30% 12%,
+        oklch(0.3 0.012 270) 0%,
+        oklch(0.18 0.01 270) 52%,
+        oklch(0.11 0.008 270) 100%);
+    border: 1px solid color-mix(in oklab, white 14%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 18%, transparent) inset,
+      0 -2px 4px 0 color-mix(in oklab, black 55%, transparent) inset,
+      0 14px 30px -14px color-mix(in oklab, black 75%, transparent);
+  }
+  .login-crest svg {
+    filter: drop-shadow(0 2px 6px color-mix(in oklab, black 55%, transparent));
+  }
+  .login-title {
+    color: oklch(0.97 0.004 270);
+    text-shadow: 0 1px 10px color-mix(in oklab, black 45%, transparent);
+  }
+  .login-subtitle {
+    color: oklch(0.66 0.012 270);
+  }
+  .login-label {
+    color: oklch(0.78 0.01 270);
+  }
+  /* inset machined input wells */
+  .login-field {
+    background: color-mix(in oklab, black 28%, transparent);
+    border: 1px solid color-mix(in oklab, white 10%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 6%, transparent) inset,
+      0 2px 6px 0 color-mix(in oklab, black 45%, transparent) inset;
+    color: oklch(0.7 0.012 270);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .login-field:focus-within {
+    border-color: color-mix(in oklab, white 26%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, white 18%, transparent),
+      0 2px 6px 0 color-mix(in oklab, black 45%, transparent) inset;
+  }
+  .login-input {
+    color: oklch(0.96 0.004 270) !important;
+    height: 2.6rem;
+  }
+  .login-input::placeholder {
+    color: oklch(0.56 0.012 270);
+  }
+  .login-footnote {
+    color: oklch(0.52 0.01 270);
+    letter-spacing: 0.04em;
+  }
 }

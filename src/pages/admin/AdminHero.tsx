@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Plus, Images, Trash2, Pencil, Loader2, GripVertical,
-  ArrowUp, ArrowDown, Eye, EyeOff, MapPin, ImageOff, Type,
+  ArrowUp, ArrowDown, Eye, EyeOff, MapPin, ImageOff, Type, Quote,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -47,6 +47,10 @@ export function AdminHero() {
     heroTitleAccent: settings.heroTitleAccent,
     heroSubtitle: settings.heroSubtitle,
   })
+  const [slogan, setSlogan] = useState({
+    footerTagline: settings.footerTagline,
+    footerNote: settings.footerNote,
+  })
 
   useEffect(() => {
     setHeadline({
@@ -57,15 +61,31 @@ export function AdminHero() {
     })
   }, [settings.heroEyebrow, settings.heroTitle, settings.heroTitleAccent, settings.heroSubtitle])
 
+  useEffect(() => {
+    setSlogan({
+      footerTagline: settings.footerTagline,
+      footerNote: settings.footerNote,
+    })
+  }, [settings.footerTagline, settings.footerNote])
+
   const headlineDirty =
     headline.heroEyebrow !== settings.heroEyebrow ||
     headline.heroTitle !== settings.heroTitle ||
     headline.heroTitleAccent !== settings.heroTitleAccent ||
     headline.heroSubtitle !== settings.heroSubtitle
 
+  const sloganDirty =
+    slogan.footerTagline !== settings.footerTagline ||
+    slogan.footerNote !== settings.footerNote
+
   function saveHeadline() {
     saveSettings({ ...(settings as Settings), ...headline })
     toast.success('Headline updated')
+  }
+
+  function saveSlogan() {
+    saveSettings({ ...(settings as Settings), ...slogan })
+    toast.success('Slogan updated')
   }
 
   useEffect(() => { loadSlides() }, [])
@@ -238,6 +258,45 @@ export function AdminHero() {
           <div className="flex justify-end">
             <Button onClick={saveHeadline} disabled={!headlineDirty}>
               Save Headline
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Slogan editor */}
+      <Card>
+        <CardContent className="space-y-4 p-5">
+          <div className="flex items-center gap-2">
+            <Quote className="size-5 text-primary" />
+            <div>
+              <p className="font-semibold leading-none">Slogan</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                The brand blurb and footer note shown across the site footer
+              </p>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Brand tagline</Label>
+            <Textarea
+              rows={2}
+              placeholder="Discover extraordinary places to stay..."
+              value={slogan.footerTagline}
+              onChange={e => setSlogan(s => ({ ...s, footerTagline: e.target.value }))}
+            />
+            <p className="text-xs text-muted-foreground">Appears beneath the logo in the footer.</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Footer note</Label>
+            <Input
+              placeholder="Crafted with precision."
+              value={slogan.footerNote}
+              onChange={e => setSlogan(s => ({ ...s, footerNote: e.target.value }))}
+            />
+            <p className="text-xs text-muted-foreground">Small line next to the copyright.</p>
+          </div>
+          <div className="flex justify-end">
+            <Button onClick={saveSlogan} disabled={!sloganDirty}>
+              Save Slogan
             </Button>
           </div>
         </CardContent>

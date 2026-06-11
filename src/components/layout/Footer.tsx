@@ -3,7 +3,7 @@ import { Home, Mail } from 'lucide-react'
 import { useSettings } from '@/lib/settings'
 
 export function Footer() {
-  const { siteName, contactEmail } = useSettings()
+  const { siteName, contactEmail, footerTagline, footerNote } = useSettings()
   return (
     <footer className="footer-premium relative overflow-hidden">
       <div className="pointer-events-none absolute inset-0 bg-dot opacity-50" />
@@ -17,7 +17,7 @@ export function Footer() {
               <span className="wordmark-premium text-2xl leading-none" data-text={siteName}>{siteName}</span>
             </Link>
             <p className="mt-5 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Discover extraordinary places to stay. From cozy cabins to luxury villas, find your perfect getaway.
+              {footerTagline}
             </p>
             {contactEmail && (
               <a
@@ -49,7 +49,7 @@ export function Footer() {
         </div>
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border/60 pt-8 text-sm text-muted-foreground sm:flex-row">
           <p>&copy; {new Date().getFullYear()} {siteName}. All rights reserved.</p>
-          <p className="text-xs tracking-wide">Crafted with precision.</p>
+          <p className="text-xs tracking-wide">{footerNote}</p>
         </div>
       </div>
     </footer>
