@@ -37,7 +37,7 @@ const navItems = [
 
 export function AdminLayout() {
   const navigate = useNavigate()
-  const { siteName, contactEmail } = useSettings()
+  const { siteName, brandTagline, contactEmail } = useSettings()
 
   function handleLogout() {
     clearAdminToken()
@@ -58,7 +58,7 @@ export function AdminLayout() {
                   </span>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="wordmark-premium truncate text-[0.95rem] leading-none" data-text={siteName}>{siteName}</span>
-                    <span className="wordmark-sub mt-1">Property Management</span>
+                    <span className="wordmark-sub mt-1">{brandTagline}</span>
                   </div>
                 </Link>
               </SidebarMenuButton>
