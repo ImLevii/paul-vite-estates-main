@@ -14,9 +14,11 @@ export function BookingConfirmationPage() {
       <main className="relative container mx-auto max-w-2xl px-4 py-16 text-center">
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-72 bg-dot mask-fade-b opacity-70" />
         <div className="flex justify-center">
-          <div className="relative flex size-20 items-center justify-center rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/20">
-            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500/10" />
-            <CheckCircle className="size-10 text-emerald-600 dark:text-emerald-400" />
+          <div className="relative">
+            <span className="absolute inset-0 animate-ping rounded-[1.4rem] bg-emerald-500/20" />
+            <div className="logo-3d-success relative flex size-20 items-center justify-center rounded-[1.4rem]">
+              <CheckCircle className="logo-mark-success size-10" />
+            </div>
           </div>
         </div>
 
