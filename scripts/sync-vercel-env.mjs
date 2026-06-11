@@ -20,12 +20,14 @@ const keys = [
   'ADMIN_USERNAME',
   'ADMIN_PASSWORD',
   'ADMIN_JWT_SECRET',
-  'VITE_API_URL',
+  // VITE_API_URL is intentionally omitted: it is environment-specific
+  // (localhost in dev, same-origin /api in production) and should be set
+  // per-environment in the Vercel dashboard, not synced from .env.local.
   'VITE_STRIPE_PUBLISHABLE_KEY',
   'VITE_PAYPAL_CLIENT_ID',
 ]
 
-const targets = ['production', 'preview']
+const targets = ['production']
 const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx'
 
 const entries = keys
@@ -42,16 +44,32 @@ if (entries.length === 0) {
 
 for (const entry of entries) {
   const [key, value] = entry
+  // Wrap the value in double quotes so shells treat metacharacters like & as
+  // literal; escape any embedded double quotes for the platform.
+  const quotedValue = process.platform === 'win32'
+    ? `"${value.replace(/"/g, '""')}"`
+    : `'${value.replace(/'/g, `'\\''`)}'`
+
   for (const target of targets) {
-    const result = spawnSync(
+    const command = [
       npxCommand,
-      ['--yes', 'vercel', 'env', 'add', key, target, '--force'],
-      {
-        input: `${value}\n`,
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-      },
-    )
+      '--yes',
+      'vercel',
+      'env',
+      'add',
+      key,
+      target,
+      '--value',
+      quotedValue,
+      '--yes',
+      '--force',
+    ].join(' ')
+
+    const result = spawnSync(command, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      shell: true,
+    })
 
     if (result.status !== 0) {
       process.stderr.write(result.stdout ?? '')
