@@ -20,6 +20,48 @@ const ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? 'admin'
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? ''
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET ?? 'please-set-ADMIN_JWT_SECRET-in-env'
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Payments (Stripe + PayPal) — server-side authorization via REST APIs.
+// Secrets live ONLY on the server. The client never sees secret keys.
+//   Stripe:  STRIPE_SECRET_KEY (sk_test_… / sk_live_…)
+//            STRIPE_PUBLISHABLE_KEY (falls back to VITE_STRIPE_PUBLISHABLE_KEY)
+//   PayPal:  PAYPAL_CLIENT_ID (falls back to VITE_PAYPAL_CLIENT_ID)
+//            PAYPAL_CLIENT_SECRET, PAYPAL_ENV ('sandbox' | 'live')
+// ─────────────────────────────────────────────────────────────────────────────
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? ''
+const STRIPE_PUBLISHABLE_KEY =
+  process.env.STRIPE_PUBLISHABLE_KEY ?? process.env.VITE_STRIPE_PUBLISHABLE_KEY ?? ''
+const PAYPAL_CLIENT_ID =
+  process.env.PAYPAL_CLIENT_ID ?? process.env.VITE_PAYPAL_CLIENT_ID ?? ''
+const PAYPAL_CLIENT_SECRET = process.env.PAYPAL_CLIENT_SECRET ?? ''
+const PAYPAL_ENV = (process.env.PAYPAL_ENV ?? 'sandbox').toLowerCase()
+const PAYPAL_API_BASE =
+  PAYPAL_ENV === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'
+
+// A provider is "configured" only when its server secret is present and real.
+const STRIPE_CONFIGURED = STRIPE_SECRET_KEY.startsWith('sk_')
+const PAYPAL_CONFIGURED =
+  PAYPAL_CLIENT_SECRET.length > 0 &&
+  PAYPAL_CLIENT_ID.length > 0 &&
+  !PAYPAL_CLIENT_ID.toLowerCase().startsWith('demo')
+
+const toMinorUnits = (amount: number) => Math.round(amount * 100)
+
+async function paypalAccessToken(): Promise<string> {
+  const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64')
+  const res = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${auth}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials',
+  })
+  if (!res.ok) throw new Error('PayPal authentication failed')
+  const data = (await res.json()) as { access_token: string }
+  return data.access_token
+}
+
 function safeEqual(a: string, b: string): boolean {
   try {
     if (a.length !== b.length) return false
@@ -224,6 +266,115 @@ app.post('/api/bookings', async (c) => {
     ) RETURNING *
   `
   return c.json(booking, 201)
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Public: Payments
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Tells the client which providers are live and exposes the public identifiers
+// (publishable key / client id) needed to mount the checkout widgets.
+app.get('/api/payments/config', (c) => {
+  return c.json({
+    stripe: {
+      configured: STRIPE_CONFIGURED,
+      publishableKey: STRIPE_CONFIGURED ? STRIPE_PUBLISHABLE_KEY : '',
+    },
+    paypal: {
+      configured: PAYPAL_CONFIGURED,
+      clientId: PAYPAL_CONFIGURED ? PAYPAL_CLIENT_ID : '',
+      env: PAYPAL_ENV,
+    },
+  })
+})
+
+// Creates a Stripe PaymentIntent and returns its client secret so the browser
+// can confirm the card payment with Stripe Elements.
+app.post('/api/payments/stripe/create-intent', async (c) => {
+  if (!STRIPE_CONFIGURED) {
+    return c.json({ configured: false, error: 'Stripe is not configured' }, 503)
+  }
+  const { amount, currency = 'usd', metadata } = await c.req.json<{
+    amount: number
+    currency?: string
+    metadata?: Record<string, string>
+  }>()
+  if (!amount || amount <= 0) return c.json({ error: 'Invalid amount' }, 400)
+
+  const params = new URLSearchParams()
+  params.set('amount', String(toMinorUnits(amount)))
+  params.set('currency', currency.toLowerCase())
+  params.set('automatic_payment_methods[enabled]', 'true')
+  if (metadata) {
+    for (const [k, v] of Object.entries(metadata)) {
+      params.set(`metadata[${k}]`, String(v))
+    }
+  }
+
+  const res = await fetch('https://api.stripe.com/v1/payment_intents', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: params.toString(),
+  })
+  const data = (await res.json()) as {
+    id?: string
+    client_secret?: string
+    error?: { message?: string }
+  }
+  if (!res.ok) {
+    return c.json({ error: data?.error?.message ?? 'Stripe error' }, 502)
+  }
+  return c.json({ clientSecret: data.client_secret, paymentIntentId: data.id })
+})
+
+// Creates a PayPal order to authorize/capture the booking total.
+app.post('/api/payments/paypal/create-order', async (c) => {
+  if (!PAYPAL_CONFIGURED) {
+    return c.json({ configured: false, error: 'PayPal is not configured' }, 503)
+  }
+  const { amount, currency = 'USD' } = await c.req.json<{ amount: number; currency?: string }>()
+  if (!amount || amount <= 0) return c.json({ error: 'Invalid amount' }, 400)
+
+  const token = await paypalAccessToken()
+  const res = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      intent: 'CAPTURE',
+      purchase_units: [
+        { amount: { currency_code: currency.toUpperCase(), value: amount.toFixed(2) } },
+      ],
+    }),
+  })
+  const data = (await res.json()) as { id?: string; message?: string }
+  if (!res.ok) return c.json({ error: data?.message ?? 'PayPal error' }, 502)
+  return c.json({ orderId: data.id })
+})
+
+// Captures a previously approved PayPal order, finalizing the payment.
+app.post('/api/payments/paypal/capture-order', async (c) => {
+  if (!PAYPAL_CONFIGURED) {
+    return c.json({ configured: false, error: 'PayPal is not configured' }, 503)
+  }
+  const { orderId } = await c.req.json<{ orderId: string }>()
+  if (!orderId) return c.json({ error: 'orderId is required' }, 400)
+
+  const token = await paypalAccessToken()
+  const res = await fetch(`${PAYPAL_API_BASE}/v2/checkout/orders/${orderId}/capture`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+  })
+  const data = (await res.json()) as {
+    status?: string
+    message?: string
+    purchase_units?: Array<{ payments?: { captures?: Array<{ id?: string }> } }>
+  }
+  if (!res.ok) return c.json({ error: data?.message ?? 'PayPal capture error' }, 502)
+  const captureId = data?.purchase_units?.[0]?.payments?.captures?.[0]?.id ?? null
+  return c.json({ status: data.status, captureId })
 })
 
 // ─────────────────────────────────────────────────────────────────────────────

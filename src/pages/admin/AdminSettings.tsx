@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { StripeMark, PayPalMark } from '@/components/payments/PaymentBrands'
 import { toast } from 'sonner'
 import { type Settings, loadSettings, saveSettings } from '@/lib/settings'
 
@@ -155,7 +156,7 @@ export function AdminSettings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="flex size-6 items-center justify-center rounded bg-foreground text-background text-xs font-bold">S</div>
+                <StripeMark />
                 Stripe Configuration
               </CardTitle>
               <CardDescription>Enable credit card payments via Stripe</CardDescription>
@@ -208,7 +209,7 @@ export function AdminSettings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <div className="flex size-6 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">P</div>
+                <PayPalMark />
                 PayPal Configuration
               </CardTitle>
               <CardDescription>Enable PayPal checkout for guests</CardDescription>

@@ -25,6 +25,13 @@ const keys = [
   // per-environment in the Vercel dashboard, not synced from .env.local.
   'VITE_STRIPE_PUBLISHABLE_KEY',
   'VITE_PAYPAL_CLIENT_ID',
+  // Server-side payment secrets — required for live payment authorization.
+  // Never expose these to the client; they are read only by the API server.
+  'STRIPE_SECRET_KEY',
+  'STRIPE_PUBLISHABLE_KEY',
+  'PAYPAL_CLIENT_ID',
+  'PAYPAL_CLIENT_SECRET',
+  'PAYPAL_ENV',
 ]
 
 const targets = ['production']

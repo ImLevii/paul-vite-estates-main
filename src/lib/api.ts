@@ -39,6 +39,11 @@ export type NavLink = {
   updated_at: string
 }
 
+export type PaymentConfig = {
+  stripe: { configured: boolean; publishableKey: string }
+  paypal: { configured: boolean; clientId: string; env: string }
+}
+
 // In dev, Vite proxies /api → http://localhost:3001
 // In production, set VITE_API_URL to your deployed API origin
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
@@ -149,6 +154,16 @@ export const api = {
   bookings: {
     get: (id: string) => get<Booking>(`/bookings/${id}`).then(normalizeBooking),
     create: (data: Partial<Booking>) => req<Booking>('POST', '/bookings', data).then(normalizeBooking),
+  },
+
+  payments: {
+    config: () => get<PaymentConfig>('/payments/config'),
+    stripeIntent: (data: { amount: number; currency?: string; metadata?: Record<string, string> }) =>
+      req<{ clientSecret: string; paymentIntentId: string }>('POST', '/payments/stripe/create-intent', data),
+    paypalCreateOrder: (data: { amount: number; currency?: string }) =>
+      req<{ orderId: string }>('POST', '/payments/paypal/create-order', data),
+    paypalCaptureOrder: (data: { orderId: string }) =>
+      req<{ status: string; captureId: string | null }>('POST', '/payments/paypal/capture-order', data),
   },
 
   admin: {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { ChevronLeft, Lock, CreditCard, Shield, Loader2 } from 'lucide-react'
+import { ChevronLeft, Lock, Shield, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,7 +10,10 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import { Header } from '@/components/layout/Header'
 import { type Property } from '@/lib/supabase'
-import { api } from '@/lib/api'
+import { api, type PaymentConfig } from '@/lib/api'
+import { StripePayment } from '@/components/payments/StripePayment'
+import { PayPalCheckout } from '@/components/payments/PayPalCheckout'
+import { StripeMark, PayPalMark } from '@/components/payments/PaymentBrands'
 import { getPropertyImage } from '@/lib/constants'
 import { differenceInDays, format, parseISO } from 'date-fns'
 import { toast } from 'sonner'
@@ -28,6 +31,7 @@ export function BookingPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'paypal'>('stripe')
+  const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null)
 
   const [form, setForm] = useState({
     firstName: '',
@@ -45,6 +49,16 @@ export function BookingPage() {
   useEffect(() => {
     if (id) loadProperty(id)
   }, [id])
+
+  useEffect(() => {
+    api.payments
+      .config()
+      .then(setPaymentConfig)
+      .catch(() => setPaymentConfig({
+        stripe: { configured: false, publishableKey: '' },
+        paypal: { configured: false, clientId: '', env: 'sandbox' },
+      }))
+  }, [])
 
   async function loadProperty(propertyId: string) {
     try {
@@ -71,17 +85,24 @@ export function BookingPage() {
     return value.replace(/\D/g, '').replace(/^(\d{2})(\d)/, '$1/$2').slice(0, 5)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  function validateGuest(): boolean {
     if (!property || !form.firstName || !form.email) {
-      toast.error('Please fill in all required fields')
-      return
+      toast.error('Please fill in your name and email first')
+      return false
     }
+    return true
+  }
 
+  // Persists the confirmed booking after payment has been authorized (or, when
+  // no live payment provider is configured, after the demo flow).
+  async function completeBooking(payment: {
+    method: 'stripe' | 'paypal'
+    status: 'authorized' | 'paid'
+    intentId: string
+  }) {
+    if (!property) return
     setSubmitting(true)
-
     try {
-      // Create booking record
       const booking = await api.bookings.create({
         property_id: property.id,
         guest_id: '00000000-0000-0000-0000-000000000000', // demo user id
@@ -93,9 +114,9 @@ export function BookingPage() {
         service_fee: serviceFee,
         total_price: totalCost,
         status: 'confirmed',
-        payment_status: 'authorized',
-        payment_method: paymentMethod,
-        payment_intent_id: `pi_demo_${Date.now()}`,
+        payment_status: payment.status,
+        payment_method: payment.method,
+        payment_intent_id: payment.intentId,
         special_requests: form.specialRequests,
         guest_name: `${form.firstName} ${form.lastName}`,
         guest_email: form.email,
@@ -105,13 +126,24 @@ export function BookingPage() {
       navigate(`/booking/confirmation/${booking.id}`)
     } catch (err) {
       console.error(err)
-      // For demo, simulate success even if auth fails
+      // For demo, simulate success even if persistence fails
       const demoId = `demo-${Date.now()}`
       toast.success('Booking confirmed! (Demo mode)')
       navigate(`/booking/confirmation/${demoId}`)
     } finally {
       setSubmitting(false)
     }
+  }
+
+  // Demo fallback used only when the selected provider has no live credentials.
+  async function handleDemoSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!validateGuest()) return
+    await completeBooking({
+      method: paymentMethod,
+      status: 'authorized',
+      intentId: `pi_demo_${Date.now()}`,
+    })
   }
 
   if (loading) {
@@ -137,7 +169,7 @@ export function BookingPage() {
         <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-5">
           {/* Left - Form */}
           <div className="lg:col-span-3">
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleDemoSubmit} className="space-y-8">
               {/* Guest Info */}
               <Card>
                 <CardHeader>
@@ -186,11 +218,11 @@ export function BookingPage() {
                       className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${paymentMethod === 'stripe' ? 'border-foreground bg-muted' : 'hover:bg-muted/50'}`}
                     >
                       <RadioGroupItem value="stripe" id="stripe" />
-                      <div className="flex items-center gap-2">
-                        <CreditCard className="size-5" />
+                      <div className="flex items-center gap-3">
+                        <StripeMark />
                         <div>
                           <p className="font-medium text-sm">Credit Card</p>
-                          <p className="text-xs text-muted-foreground">Via Stripe</p>
+                          <p className="text-xs text-muted-foreground">Visa, Mastercard, Amex</p>
                         </div>
                       </div>
                     </Label>
@@ -199,8 +231,8 @@ export function BookingPage() {
                       className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${paymentMethod === 'paypal' ? 'border-foreground bg-muted' : 'hover:bg-muted/50'}`}
                     >
                       <RadioGroupItem value="paypal" id="paypal" />
-                      <div className="flex items-center gap-2">
-                        <div className="flex size-5 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-bold">P</div>
+                      <div className="flex items-center gap-3">
+                        <PayPalMark />
                         <div>
                           <p className="font-medium text-sm">PayPal</p>
                           <p className="text-xs text-muted-foreground">Secure checkout</p>
@@ -209,50 +241,86 @@ export function BookingPage() {
                     </Label>
                   </RadioGroup>
 
+                  {/* Stripe — live Payment Element when configured, demo card form otherwise */}
                   {paymentMethod === 'stripe' && (
-                    <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
-                      <div className="space-y-1.5">
-                        <Label>Card number</Label>
-                        <Input
-                          placeholder="1234 5678 9012 3456"
-                          value={form.cardNumber}
-                          onChange={e => setForm(f => ({ ...f, cardNumber: formatCardNumber(e.target.value) }))}
+                    paymentConfig?.stripe.configured ? (
+                      <div className="rounded-lg border bg-muted/30 p-4">
+                        <StripePayment
+                          publishableKey={paymentConfig.stripe.publishableKey}
+                          amount={totalCost}
+                          metadata={{ property_id: property.id, guest_email: form.email }}
+                          buttonLabel={`Pay $${totalCost.toFixed(2)}`}
+                          onBeforePay={validateGuest}
+                          onPaid={(paymentIntentId) =>
+                            completeBooking({ method: 'stripe', status: 'paid', intentId: paymentIntentId })
+                          }
                         />
                       </div>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    ) : (
+                      <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
                         <div className="space-y-1.5">
-                          <Label>Expiry date</Label>
+                          <Label>Card number</Label>
                           <Input
-                            placeholder="MM/YY"
-                            value={form.cardExpiry}
-                            onChange={e => setForm(f => ({ ...f, cardExpiry: formatExpiry(e.target.value) }))}
+                            placeholder="1234 5678 9012 3456"
+                            value={form.cardNumber}
+                            onChange={e => setForm(f => ({ ...f, cardNumber: formatCardNumber(e.target.value) }))}
                           />
                         </div>
-                        <div className="space-y-1.5">
-                          <Label>CVC</Label>
-                          <Input
-                            placeholder="123"
-                            maxLength={4}
-                            value={form.cardCvc}
-                            onChange={e => setForm(f => ({ ...f, cardCvc: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
-                          />
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div className="space-y-1.5">
+                            <Label>Expiry date</Label>
+                            <Input
+                              placeholder="MM/YY"
+                              value={form.cardExpiry}
+                              onChange={e => setForm(f => ({ ...f, cardExpiry: formatExpiry(e.target.value) }))}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label>CVC</Label>
+                            <Input
+                              placeholder="123"
+                              maxLength={4}
+                              value={form.cardCvc}
+                              onChange={e => setForm(f => ({ ...f, cardCvc: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                            />
+                          </div>
                         </div>
+                        <div className="space-y-1.5">
+                          <Label>Name on card</Label>
+                          <Input placeholder="John Doe" value={form.cardName} onChange={e => setForm(f => ({ ...f, cardName: e.target.value }))} />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Demo mode — no real charge. Add <span className="font-mono">STRIPE_SECRET_KEY</span> to enable live card payments.
+                        </p>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label>Name on card</Label>
-                        <Input placeholder="John Doe" value={form.cardName} onChange={e => setForm(f => ({ ...f, cardName: e.target.value }))} />
-                      </div>
-                    </div>
+                    )
                   )}
 
+                  {/* PayPal — live Buttons when configured, demo notice otherwise */}
                   {paymentMethod === 'paypal' && (
-                    <div className="rounded-lg border bg-blue-50 p-4 text-center dark:bg-blue-900/20">
-                      <p className="text-sm text-muted-foreground">You'll be redirected to PayPal to complete payment securely.</p>
-                      <div className="mt-3 flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400">
-                        <Shield className="size-4" />
-                        <span className="text-sm font-medium">PayPal Buyer Protection</span>
+                    paymentConfig?.paypal.configured ? (
+                      <div className="rounded-lg border p-4">
+                        <PayPalCheckout
+                          clientId={paymentConfig.paypal.clientId}
+                          amount={totalCost}
+                          onBeforePay={validateGuest}
+                          onPaid={(captureId) =>
+                            completeBooking({ method: 'paypal', status: 'paid', intentId: captureId })
+                          }
+                        />
                       </div>
-                    </div>
+                    ) : (
+                      <div className="rounded-lg border bg-blue-50 p-4 text-center dark:bg-blue-900/20">
+                        <p className="text-sm text-muted-foreground">You'll be redirected to PayPal to complete payment securely.</p>
+                        <div className="mt-3 flex items-center justify-center gap-2 text-blue-600 dark:text-blue-400">
+                          <Shield className="size-4" />
+                          <span className="text-sm font-medium">PayPal Buyer Protection</span>
+                        </div>
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          Demo mode — no real charge. Add PayPal credentials to enable live checkout.
+                        </p>
+                      </div>
+                    )
                   )}
                 </CardContent>
               </Card>
@@ -267,9 +335,14 @@ export function BookingPage() {
                 </CardContent>
               </Card>
 
-              <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-                {submitting ? <><Loader2 className="size-4 animate-spin" /> Processing payment...</> : `Confirm and pay $${totalCost.toFixed(2)}`}
-              </Button>
+              {!(
+                (paymentMethod === 'stripe' && paymentConfig?.stripe.configured) ||
+                (paymentMethod === 'paypal' && paymentConfig?.paypal.configured)
+              ) && (
+                <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+                  {submitting ? <><Loader2 className="size-4 animate-spin" /> Processing payment...</> : `Confirm and pay $${totalCost.toFixed(2)}`}
+                </Button>
+              )}
             </form>
           </div>
 
