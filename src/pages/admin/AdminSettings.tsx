@@ -66,10 +66,14 @@ export function AdminSettings() {
                   <Input value={settings.siteName} onChange={e => set('siteName', e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
+                  <Label>Brand Tagline</Label>
+                  <Input value={settings.brandTagline} onChange={e => set('brandTagline', e.target.value)} placeholder="Private Estates" />
+                </div>
+                <div className="space-y-1.5">
                   <Label>Site URL</Label>
                   <Input value={settings.siteUrl} onChange={e => set('siteUrl', e.target.value)} />
                 </div>
-                <div className="sm:col-span-2 space-y-1.5">
+                <div className="space-y-1.5">
                   <Label>Contact Email</Label>
                   <Input type="email" value={settings.contactEmail} onChange={e => set('contactEmail', e.target.value)} />
                 </div>

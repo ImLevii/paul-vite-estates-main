@@ -9,6 +9,7 @@ export const SETTINGS_KEY = 'haven_admin_settings'
 
 export const DEFAULT_SETTINGS = {
   siteName: 'Paul',
+  brandTagline: 'Private Estates',
   siteUrl: 'https://paul.example.com',
   contactEmail: 'admin@paul.com',
   heroEyebrow: 'Curated Escapes',

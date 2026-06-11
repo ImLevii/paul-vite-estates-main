@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/sheet'
 
 export function Header() {
-  const { siteName } = useSettings()
+  const { siteName, brandTagline } = useSettings()
 
   return (
     <header className="navbar-premium sticky top-0 z-50 w-full">
@@ -25,7 +25,7 @@ export function Header() {
           </div>
           <span className="flex flex-col">
             <span className="wordmark-premium text-[1.35rem] leading-none" data-text={siteName}>{siteName}</span>
-            <span className="wordmark-sub">Private Estates</span>
+            <span className="wordmark-sub">{brandTagline}</span>
           </span>
         </Link>
 
