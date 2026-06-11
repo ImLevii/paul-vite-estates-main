@@ -309,27 +309,61 @@
     background:
       linear-gradient(
         180deg,
-        color-mix(in oklab, var(--card) 78%, transparent) 0%,
-        color-mix(in oklab, var(--card) 66%, transparent) 100%
+        color-mix(in oklab, var(--card) 55%, transparent) 0%,
+        color-mix(in oklab, var(--card) 38%, transparent) 100%
       );
-    backdrop-filter: blur(22px) saturate(180%);
-    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(200%) brightness(1.05);
+    -webkit-backdrop-filter: blur(28px) saturate(200%) brightness(1.05);
     border-bottom: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
     box-shadow:
-      0 1px 0 0 color-mix(in oklab, white 55%, transparent) inset,
+      0 1px 0 0 color-mix(in oklab, white 70%, transparent) inset,
       0 8px 30px -16px color-mix(in oklab, var(--foreground) 35%, transparent);
   }
   .dark .navbar-premium {
     background:
       linear-gradient(
         180deg,
-        color-mix(in oklab, var(--card) 64%, transparent) 0%,
-        color-mix(in oklab, black 72%, transparent) 100%
+        color-mix(in oklab, white 9%, transparent) 0%,
+        color-mix(in oklab, black 42%, transparent) 100%
       );
-    border-bottom-color: color-mix(in oklab, white 9%, transparent);
+    border-bottom-color: color-mix(in oklab, white 12%, transparent);
     box-shadow:
-      0 1px 0 0 color-mix(in oklab, white 8%, transparent) inset,
-      0 14px 44px -22px color-mix(in oklab, black 90%, transparent);
+      0 1px 0 0 color-mix(in oklab, white 14%, transparent) inset,
+      0 16px 48px -22px color-mix(in oklab, black 92%, transparent);
+  }
+  /* Scroll-aware state: glass condenses into a more solid, grounded bar */
+  .navbar-premium[data-scrolled='true'] {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--card) 82%, transparent) 0%,
+        color-mix(in oklab, var(--card) 70%, transparent) 100%
+      );
+    backdrop-filter: blur(34px) saturate(210%) brightness(1.04);
+    -webkit-backdrop-filter: blur(34px) saturate(210%) brightness(1.04);
+    border-bottom-color: color-mix(in oklab, var(--foreground) 12%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 75%, transparent) inset,
+      0 12px 36px -18px color-mix(in oklab, var(--foreground) 45%, transparent);
+  }
+  .dark .navbar-premium[data-scrolled='true'] {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, white 6%, transparent) 0%,
+        color-mix(in oklab, black 68%, transparent) 100%
+      );
+    border-bottom-color: color-mix(in oklab, white 16%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 16%, transparent) inset,
+      0 20px 56px -24px color-mix(in oklab, black 96%, transparent);
+  }
+  .navbar-premium {
+    transition:
+      background 0.4s ease,
+      box-shadow 0.4s ease,
+      border-color 0.4s ease,
+      backdrop-filter 0.4s ease;
   }
   /* Faint carbon-weave texture layer */
   .navbar-premium::before {
@@ -748,7 +782,8 @@
      ============================================================ */
   .nav-action {
     position: relative;
-    border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent) !important;
+    border: 1px solid color-mix(in oklab, var(--foreground) 14%, transparent) !important;
+    border-radius: 0.7rem !important;
     background:
       linear-gradient(180deg,
         color-mix(in oklab, var(--card) 75%, transparent),
@@ -756,7 +791,8 @@
     backdrop-filter: blur(12px) saturate(160%);
     -webkit-backdrop-filter: blur(12px) saturate(160%);
     box-shadow:
-      0 1px 0 0 color-mix(in oklab, white 55%, transparent) inset,
+      0 0 0 1px color-mix(in oklab, white 40%, transparent) inset,
+      0 1px 0 0 color-mix(in oklab, white 60%, transparent) inset,
       0 4px 14px -8px color-mix(in oklab, var(--foreground) 40%, transparent);
     transition:
       transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
@@ -764,28 +800,31 @@
       border-color 0.4s cubic-bezier(0.22, 1, 0.36, 1) !important;
   }
   .dark .nav-action {
-    border-color: color-mix(in oklab, white 12%, transparent) !important;
+    border-color: color-mix(in oklab, white 15%, transparent) !important;
     background:
       linear-gradient(180deg,
         color-mix(in oklab, white 7%, transparent),
         color-mix(in oklab, white 2%, transparent)) !important;
     box-shadow:
-      0 1px 0 0 color-mix(in oklab, white 9%, transparent) inset,
+      0 0 0 1px color-mix(in oklab, white 6%, transparent) inset,
+      0 1px 0 0 color-mix(in oklab, white 12%, transparent) inset,
       0 6px 18px -10px color-mix(in oklab, black 85%, transparent);
   }
   .nav-action:hover {
     transform: translateY(-1.5px);
-    border-color: color-mix(in oklab, var(--foreground) 24%, transparent) !important;
+    border-color: color-mix(in oklab, var(--foreground) 28%, transparent) !important;
     box-shadow:
-      0 1px 0 0 color-mix(in oklab, white 62%, transparent) inset,
+      0 0 0 1px color-mix(in oklab, white 50%, transparent) inset,
+      0 1px 0 0 color-mix(in oklab, white 70%, transparent) inset,
       0 10px 24px -10px color-mix(in oklab, var(--foreground) 50%, transparent);
   }
   .dark .nav-action:hover {
-    border-color: color-mix(in oklab, white 24%, transparent) !important;
+    border-color: color-mix(in oklab, white 28%, transparent) !important;
     box-shadow:
-      0 1px 0 0 color-mix(in oklab, white 12%, transparent) inset,
+      0 0 0 1px color-mix(in oklab, white 10%, transparent) inset,
+      0 1px 0 0 color-mix(in oklab, white 16%, transparent) inset,
       0 14px 30px -12px color-mix(in oklab, black 90%, transparent),
-      0 0 18px -4px color-mix(in oklab, white 12%, transparent);
+      0 0 18px -4px color-mix(in oklab, white 14%, transparent);
   }
 
   /* ============================================================
@@ -916,13 +955,22 @@
   }
   .hero-eyebrow-text {
     font-family: var(--font-brand);
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    letter-spacing: 0.42em;
+    letter-spacing: 0.44em;
     text-transform: uppercase;
-    text-indent: 0.42em;
+    text-indent: 0.44em;
     white-space: nowrap;
-    text-shadow: 0 1px 8px color-mix(in oklab, black 45%, transparent);
+    background-image: linear-gradient(
+      90deg,
+      oklch(0.92 0.015 90),
+      oklch(1 0 0),
+      oklch(0.9 0.02 90)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 1px 8px color-mix(in oklab, black 50%, transparent));
   }
   .hero-eyebrow-rule {
     display: block;
@@ -940,6 +988,15 @@
   .hero-eyebrow svg {
     opacity: 0.85;
     filter: drop-shadow(0 1px 4px color-mix(in oklab, black 40%, transparent));
+  }
+  .hero-vignette {
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse 80% 70% at 50% 42%,
+      transparent 0%,
+      transparent 45%,
+      color-mix(in oklab, black 38%, transparent) 100%
+    );
   }
   .hero-title {
     line-height: 0.96;
@@ -978,7 +1035,25 @@
     50% { background-position: 100% 50%; }
   }
   .hero-subtitle {
-    text-shadow: 0 1px 12px color-mix(in oklab, black 40%, transparent);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    text-wrap: balance;
+    background-image: linear-gradient(
+      90deg,
+      oklch(0.92 0.015 90),
+      oklch(1 0 0),
+      oklch(0.9 0.02 90)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 1px 8px color-mix(in oklab, black 50%, transparent));
+  }
+  .hero-subtitle em,
+  .hero-subtitle strong {
+    font-style: normal;
+    font-weight: 500;
+    color: oklch(1 0 0);
   }
 
   /* ============================================================

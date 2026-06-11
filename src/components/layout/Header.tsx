@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { User, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
@@ -37,9 +38,20 @@ function NavItem({ link, className }: { link: NavLink; className?: string }) {
 export function Header() {
   const { siteName, brandTagline } = useSettings()
   const navLinks = useNavLinks()
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
-    <header className="navbar-premium sticky top-0 z-50 w-full">
+    <header
+      data-scrolled={scrolled}
+      className="navbar-premium sticky top-0 z-50 w-full"
+    >
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="group flex items-center gap-3.5">

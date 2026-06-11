@@ -123,6 +123,8 @@ export function HomePage() {
           ))}
           <div className="absolute inset-0 bg-linear-to-b from-black/60 via-black/45 to-black/65" />
           <div className="absolute inset-0 bg-linear-to-tr from-black/20 via-transparent to-transparent" />
+          {/* Soft focal vignette to draw the eye toward the headline */}
+          <div className="hero-vignette absolute inset-0" />
           {/* Fade the bottom edge into the page background for a seamless bleed */}
           <div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-b from-transparent to-background" />
         </div>
@@ -144,7 +146,7 @@ export function HomePage() {
                 <span className="hero-accent block">{settings.heroTitleAccent}</span>
               )}
             </h1>
-            <p className="hero-subtitle mx-auto mt-5 max-w-xl text-balance text-lg text-white/80">
+            <p className="hero-subtitle mx-auto mt-6 max-w-2xl text-balance text-lg leading-relaxed md:text-xl">
               {settings.heroSubtitle}
             </p>
 
@@ -207,7 +209,7 @@ export function HomePage() {
       </section>
 
       {/* Category Filter Pills */}
-      <section className="sticky top-16 z-40 border-b border-border/60 glass">
+      <section className="border-b border-border/60 glass">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="flex items-center gap-2 overflow-x-auto py-3 scrollbar-none">
             {[{ value: 'all', label: 'All', icon: 'all' }, ...propertyTypes].map(type => (
