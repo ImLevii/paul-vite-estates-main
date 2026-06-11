@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { TrendingUp, ArrowUpRight, ArrowRight, Star } from 'lucide-react'
+import { TrendingUp, ArrowUpRight, ArrowDownRight, ArrowRight, Star } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { useLiveData } from '@/hooks/use-live-data'
 import { BOOKING_STATUSES } from '@/lib/constants'
 import { format, parseISO } from 'date-fns'
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid
+  AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid
 } from 'recharts'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
 
@@ -21,6 +21,9 @@ const chartConfig = {
   revenue: { label: 'Revenue', color: 'var(--chart-1)' },
   bookings: { label: 'Bookings', color: 'var(--chart-2)' },
 }
+
+const REV_UP = 'oklch(0.72 0.17 155)'
+const REV_DOWN = 'oklch(0.64 0.21 25)'
 
 // Demo chart data
 const revenueData = [
@@ -31,6 +34,22 @@ const revenueData = [
   { month: 'May', revenue: 9100, bookings: 28 },
   { month: 'Jun', revenue: 11400, bookings: 35 },
 ]
+
+// directional dot: green when revenue rose vs prior month, red when it fell
+function RevenueDot(props: { cx?: number; cy?: number; index?: number }) {
+  const { cx, cy, index } = props
+  if (cx == null || cy == null || index == null) return null
+  const prev = revenueData[index - 1]
+  const curr = revenueData[index]
+  const up = !prev || curr.revenue >= prev.revenue
+  const color = up ? REV_UP : REV_DOWN
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={6} fill={color} opacity={0.18} />
+      <circle cx={cx} cy={cy} r={3.2} fill={color} stroke="var(--card)" strokeWidth={1.5} />
+    </g>
+  )
+}
 
 export function AdminDashboard() {
   const [properties, setProperties] = useState<Property[]>([])
@@ -151,19 +170,60 @@ export function AdminDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Revenue Chart */}
         <Card className="admin-card lg:col-span-3">
-          <CardHeader>
-            <CardTitle>Revenue Overview</CardTitle>
-            <CardDescription>Monthly revenue for 2025</CardDescription>
+          <CardHeader className="flex flex-row items-start justify-between">
+            <div className="space-y-1.5">
+              <CardTitle>Revenue Overview</CardTitle>
+              <CardDescription>Monthly revenue for 2025</CardDescription>
+            </div>
+            {(() => {
+              const first = revenueData[0].revenue
+              const last = revenueData[revenueData.length - 1].revenue
+              const pct = first > 0 ? ((last - first) / first) * 100 : 0
+              const up = pct >= 0
+              return (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
+                  style={{
+                    color: up ? REV_UP : REV_DOWN,
+                    borderColor: `color-mix(in oklab, ${up ? REV_UP : REV_DOWN} 35%, transparent)`,
+                    background: `color-mix(in oklab, ${up ? REV_UP : REV_DOWN} 12%, transparent)`,
+                  }}
+                >
+                  {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
+                  {up ? '+' : ''}{pct.toFixed(1)}%
+                </span>
+              )
+            })()}
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-48 w-full">
-              <BarChart data={revenueData}>
+              <AreaChart data={revenueData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="revenueFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={REV_UP} stopOpacity={0.35} />
+                    <stop offset="55%" stopColor={REV_UP} stopOpacity={0.12} />
+                    <stop offset="100%" stopColor={REV_UP} stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="revenueStroke" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor={REV_DOWN} />
+                    <stop offset="45%" stopColor={REV_UP} />
+                    <stop offset="100%" stopColor={REV_UP} />
+                  </linearGradient>
+                </defs>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
                 <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12 }} tickFormatter={v => `$${v / 1000}k`} />
-                <Tooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Tooltip content={<ChartTooltipContent />} cursor={{ stroke: 'var(--border)', strokeDasharray: '4 4' }} />
+                <Area
+                  type="monotone"
+                  dataKey="revenue"
+                  stroke="url(#revenueStroke)"
+                  strokeWidth={2.5}
+                  fill="url(#revenueFill)"
+                  dot={<RevenueDot />}
+                  activeDot={{ r: 5, strokeWidth: 2, stroke: 'var(--card)' }}
+                />
+              </AreaChart>
             </ChartContainer>
           </CardContent>
         </Card>
