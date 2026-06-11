@@ -14,7 +14,8 @@ import { type Property, type HeroSlide } from '@/lib/supabase'
 import { api } from '@/lib/api'
 import { useLiveData } from '@/hooks/use-live-data'
 import { useSettings } from '@/lib/settings'
-import { PROPERTY_TYPES, getPropertyImage } from '@/lib/constants'
+import { getPropertyImage } from '@/lib/constants'
+import { usePropertyTypes } from '@/lib/property-types'
 
 const FALLBACK_HERO: Pick<HeroSlide, 'image' | 'location' | 'tagline'>[] = [
   {
@@ -37,6 +38,7 @@ const FALLBACK_HERO: Pick<HeroSlide, 'image' | 'location' | 'tagline'>[] = [
 export function HomePage() {
   const [searchParams] = useSearchParams()
   const settings = useSettings()
+  const propertyTypes = usePropertyTypes()
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -164,7 +166,7 @@ export function HomePage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
-                  {PROPERTY_TYPES.map(t => (
+                  {propertyTypes.map(t => (
                     <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -208,7 +210,7 @@ export function HomePage() {
       <section className="sticky top-16 z-40 border-b border-border/60 glass">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="flex items-center gap-2 overflow-x-auto py-3 scrollbar-none">
-            {[{ value: 'all', label: 'All' }, ...PROPERTY_TYPES].map(type => (
+            {[{ value: 'all', label: 'All', icon: 'all' }, ...propertyTypes].map(type => (
               <button
                 key={type.value}
                 onClick={() => setSelectedType(type.value)}
@@ -216,7 +218,7 @@ export function HomePage() {
                   selectedType === type.value ? 'filter-pill-active' : ''
                 }`}
               >
-                <PropertyTypeIcon type={type.value} className="size-4" />
+                <PropertyTypeIcon type={type.icon} className="size-4" />
                 {type.label}
               </button>
             ))}
@@ -246,7 +248,7 @@ export function HomePage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-              {search ? `Results for "${search}"` : selectedType !== 'all' ? `${PROPERTY_TYPES.find(t => t.value === selectedType)?.label}s` : 'All Properties'}
+              {search ? `Results for "${search}"` : selectedType !== 'all' ? `${propertyTypes.find(t => t.value === selectedType)?.label}s` : 'All Properties'}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {loading ? 'Loading...' : `${filteredProperties.length} properties available`}

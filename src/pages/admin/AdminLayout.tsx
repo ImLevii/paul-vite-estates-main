@@ -1,7 +1,7 @@
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, CalendarDays, Settings,
-  ChevronLeft, Bell, Search, Images, LogOut
+  ChevronLeft, Bell, Search, Images, LogOut, Tags, Users,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -23,7 +23,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Separator } from '@/components/ui/separator'
 import { HavenMark } from '@/components/layout/HavenMark'
-import { clearAdminToken } from '@/lib/admin-auth'
+import { clearAdminToken, getAdminRole } from '@/lib/admin-auth'
 import { useSettings } from '@/lib/settings'
 import { toast } from 'sonner'
 
@@ -32,12 +32,16 @@ const navItems = [
   { to: '/admin/listings', label: 'Listings', icon: Building2 },
   { to: '/admin/bookings', label: 'Bookings', icon: CalendarDays },
   { to: '/admin/hero', label: 'Hero Section', icon: Images },
+  { to: '/admin/categories', label: 'Categories', icon: Tags },
+  { to: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
 export function AdminLayout() {
   const navigate = useNavigate()
   const { siteName, brandTagline, contactEmail } = useSettings()
+  const role = getAdminRole()
+  const visibleNav = navItems.filter(item => !item.adminOnly || role === 'admin')
 
   function handleLogout() {
     clearAdminToken()
@@ -71,7 +75,7 @@ export function AdminLayout() {
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {navItems.map(item => (
+                {visibleNav.map(item => (
                   <SidebarMenuItem key={item.to}>
                     <NavLink to={item.to} end={item.end}>
                       {({ isActive }) => (

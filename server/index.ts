@@ -29,6 +29,38 @@ function safeEqual(a: string, b: string): boolean {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Password hashing (scrypt — no external dependency)
+// Stored as `scrypt$<saltHex>$<hashHex>`.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function hashPassword(password: string): string {
+  const salt = crypto.randomBytes(16)
+  const hash = crypto.scryptSync(password, salt, 64)
+  return `scrypt$${salt.toString('hex')}$${hash.toString('hex')}`
+}
+
+function verifyPassword(password: string, stored: string): boolean {
+  try {
+    const [scheme, saltHex, hashHex] = stored.split('$')
+    if (scheme !== 'scrypt' || !saltHex || !hashHex) return false
+    const salt = Buffer.from(saltHex, 'hex')
+    const expected = Buffer.from(hashHex, 'hex')
+    const actual = crypto.scryptSync(password, salt, expected.length)
+    return crypto.timingSafeEqual(actual, expected)
+  } catch {
+    return false
+  }
+}
+
+type Role = 'admin' | 'manager' | 'guest'
+
+/** Reads + verifies the JWT role from the request context. */
+function getRole(c: { get: (k: string) => unknown }): Role {
+  const payload = c.get('jwtPayload') as { role?: string } | undefined
+  return (payload?.role as Role) ?? 'guest'
+}
+
 const db = postgres(DATABASE_URL, {
   ssl: 'require',
   types: {
@@ -198,18 +230,147 @@ app.post('/api/bookings', async (c) => {
 // Admin: Auth
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin Users (DB-backed) — single source of truth for credentials across all
+// devices/locations. The env ADMIN_USERNAME/ADMIN_PASSWORD seeds the first
+// admin account on initial startup only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+let adminUsersReady = false
+async function ensureAdminUsersTable() {
+  if (adminUsersReady) return
+  await db.unsafe(`
+    CREATE TABLE IF NOT EXISTS admin_users (
+      id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      username      TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      full_name     TEXT NOT NULL DEFAULT '',
+      email         TEXT NOT NULL DEFAULT '',
+      role          TEXT NOT NULL DEFAULT 'guest' CHECK (role IN ('admin', 'manager', 'guest')),
+      is_active     BOOLEAN NOT NULL DEFAULT true,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `)
+  // Seed the initial admin from env, but only if no users exist yet.
+  const [{ count }] = await db<[{ count: string }]>`SELECT COUNT(*)::text AS count FROM admin_users`
+  if (parseInt(count) === 0 && ADMIN_USERNAME && ADMIN_PASSWORD) {
+    await db`
+      INSERT INTO admin_users (username, password_hash, full_name, role)
+      VALUES (${ADMIN_USERNAME}, ${hashPassword(ADMIN_PASSWORD)}, 'Administrator', 'admin')
+      ON CONFLICT (username) DO NOTHING
+    `
+  }
+  adminUsersReady = true
+}
+
+type AdminUserRow = {
+  id: string
+  username: string
+  password_hash: string
+  full_name: string
+  email: string
+  role: Role
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Property Types (DB-backed) — configurable category pills/filters.
+// ─────────────────────────────────────────────────────────────────────────────
+
+let propertyTypesReady = false
+async function ensurePropertyTypesTable() {
+  if (propertyTypesReady) return
+  await db.unsafe(`
+    CREATE TABLE IF NOT EXISTS property_types (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      value       TEXT NOT NULL UNIQUE,
+      label       TEXT NOT NULL,
+      icon        TEXT NOT NULL DEFAULT 'other',
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      is_active   BOOLEAN NOT NULL DEFAULT true,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `)
+  // Custom categories require dropping the original CHECK constraint on
+  // properties.property_type (seeded by the SQL migration), otherwise inserting
+  // a property with a new type fails.
+  await db.unsafe(`ALTER TABLE properties DROP CONSTRAINT IF EXISTS properties_property_type_check`)
+  const [{ count }] = await db<[{ count: string }]>`SELECT COUNT(*)::text AS count FROM property_types`
+  if (parseInt(count) === 0) {
+    const seed = [
+      { value: 'apartment', label: 'Apartment', icon: 'apartment' },
+      { value: 'house', label: 'House', icon: 'house' },
+      { value: 'villa', label: 'Villa', icon: 'villa' },
+      { value: 'condo', label: 'Condo', icon: 'condo' },
+      { value: 'studio', label: 'Studio', icon: 'studio' },
+      { value: 'townhouse', label: 'Townhouse', icon: 'townhouse' },
+      { value: 'cabin', label: 'Cabin', icon: 'cabin' },
+      { value: 'cottage', label: 'Cottage', icon: 'cottage' },
+      { value: 'other', label: 'Other', icon: 'other' },
+    ].map((t, i) => ({ ...t, sort_order: i, is_active: true }))
+    await db`INSERT INTO property_types ${db(seed)}`
+  }
+  propertyTypesReady = true
+}
+
+type PropertyTypeRow = {
+  id: string
+  value: string
+  label: string
+  icon: string
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+app.get('/api/property-types', async (c) => {
+  await ensurePropertyTypesTable()
+  const rows = await db<PropertyTypeRow[]>`
+    SELECT * FROM property_types WHERE is_active = true ORDER BY sort_order ASC
+  `
+  return c.json(rows)
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin: Auth
+// ─────────────────────────────────────────────────────────────────────────────
+
 app.post('/api/admin/login', async (c) => {
+  await ensureAdminUsersTable()
   const body = await c.req.json<{ username?: string; password?: string }>()
   const { username = '', password = '' } = body
-  if (!safeEqual(username, ADMIN_USERNAME) || !safeEqual(password, ADMIN_PASSWORD)) {
-    return c.json({ error: 'Invalid credentials' }, 401)
+
+  const [user] = await db<AdminUserRow[]>`
+    SELECT * FROM admin_users WHERE username = ${username}
+  `
+
+  // Fallback to env credentials when the DB has no matching user yet — keeps
+  // the very first login working before any account is seeded.
+  let authed = false
+  let role: Role = 'guest'
+  let sub = username
+  if (user && user.is_active && verifyPassword(password, user.password_hash)) {
+    authed = true
+    role = user.role
+    sub = user.username
+  } else if (!user && ADMIN_PASSWORD && safeEqual(username, ADMIN_USERNAME) && safeEqual(password, ADMIN_PASSWORD)) {
+    authed = true
+    role = 'admin'
   }
+
+  if (!authed) return c.json({ error: 'Invalid credentials' }, 401)
+
   const token = await sign(
-    { sub: username, role: 'admin', exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 },
+    { sub, role, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7 },
     JWT_SECRET,
     'HS256',
   )
-  return c.json({ token })
+  return c.json({ token, role })
 })
 
 app.get('/api/admin/me', jwt({ secret: JWT_SECRET, alg: 'HS256' }), async (c) => {
@@ -219,6 +380,149 @@ app.get('/api/admin/me', jwt({ secret: JWT_SECRET, alg: 'HS256' }), async (c) =>
 
 // Protect all remaining admin routes with JWT
 app.use('/api/admin/*', jwt({ secret: JWT_SECRET, alg: 'HS256' }))
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin: Property Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/admin/property-types', async (c) => {
+  await ensurePropertyTypesTable()
+  const rows = await db<PropertyTypeRow[]>`SELECT * FROM property_types ORDER BY sort_order ASC`
+  return c.json(rows)
+})
+
+app.post('/api/admin/property-types', async (c) => {
+  await ensurePropertyTypesTable()
+  if (getRole(c) !== 'admin') return c.json({ error: 'Forbidden' }, 403)
+  const body = await c.req.json<Partial<PropertyTypeRow>>()
+  const value = (body.value ?? '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-')
+  const { label, icon = 'other', sort_order = 0, is_active = true } = body
+  if (!value || !label) return c.json({ error: 'value and label are required' }, 400)
+  try {
+    const [row] = await db<PropertyTypeRow[]>`
+      INSERT INTO property_types (value, label, icon, sort_order, is_active)
+      VALUES (${value}, ${label}, ${icon}, ${sort_order}, ${is_active})
+      RETURNING *
+    `
+    return c.json(row, 201)
+  } catch {
+    return c.json({ error: 'A category with that value already exists' }, 409)
+  }
+})
+
+app.patch('/api/admin/property-types/:id', async (c) => {
+  if (getRole(c) !== 'admin') return c.json({ error: 'Forbidden' }, 403)
+  const { id } = c.req.param()
+  const body = await c.req.json<Record<string, unknown>>()
+  const ALLOWED = new Set(['label', 'icon', 'sort_order', 'is_active'])
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  for (const [k, v] of Object.entries(body)) {
+    if (ALLOWED.has(k)) updates[k] = v
+  }
+  const [row] = await db<PropertyTypeRow[]>`
+    UPDATE property_types SET ${db(updates)} WHERE id = ${id} RETURNING *
+  `
+  if (!row) return c.json({ error: 'Not found' }, 404)
+  return c.json(row)
+})
+
+app.delete('/api/admin/property-types/:id', async (c) => {
+  if (getRole(c) !== 'admin') return c.json({ error: 'Forbidden' }, 403)
+  const { id } = c.req.param()
+  await db`DELETE FROM property_types WHERE id = ${id}`
+  return c.json({ ok: true })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin: Users (admin role only)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const publicUser = (u: AdminUserRow) => ({
+  id: u.id, username: u.username, full_name: u.full_name,
+  email: u.email, role: u.role, is_active: u.is_active,
+  created_at: u.created_at, updated_at: u.updated_at,
+})
+
+app.get('/api/admin/users', async (c) => {
+  await ensureAdminUsersTable()
+  if (getRole(c) !== 'admin') return c.json({ error: 'Forbidden' }, 403)
+  const rows = await db<AdminUserRow[]>`SELECT * FROM admin_users ORDER BY created_at ASC`
+  return c.json(rows.map(publicUser))
+})
+
+app.post('/api/admin/users', async (c) => {
+  await ensureAdminUsersTable()
+  if (getRole(c) !== 'admin') return c.json({ error: 'Forbidden' }, 403)
+  const body = await c.req.json<{
+    username?: string; password?: string; full_name?: string
+    email?: string; role?: Role; is_active?: boolean
+  }>()
+  const username = (body.username ?? '').trim()
+  const { password = '', full_name = '', email = '', role = 'guest', is_active = true } = body
+  if (!username || !password) return c.json({ error: 'username and password are required' }, 400)
+  if (!['admin', 'manager', 'guest'].includes(role)) return c.json({ error: 'Invalid role' }, 400)
+  try {
+    const [row] = await db<AdminUserRow[]>`
+      INSERT INTO admin_users (username, password_hash, full_name, email, role, is_active)
+      VALUES (${username}, ${hashPassword(password)}, ${full_name}, ${email}, ${role}, ${is_active})
+      RETURNING *
+    `
+    return c.json(publicUser(row), 201)
+  } catch {
+    return c.json({ error: 'A user with that username already exists' }, 409)
+  }
+})
+
+app.patch('/api/admin/users/:id', async (c) => {
+  await ensureAdminUsersTable()
+  if (getRole(c) !== 'admin') return c.json({ error: 'Forbidden' }, 403)
+  const { id } = c.req.param()
+  const body = await c.req.json<Record<string, unknown>>()
+
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  if (typeof body.full_name === 'string') updates.full_name = body.full_name
+  if (typeof body.email === 'string') updates.email = body.email
+  if (typeof body.is_active === 'boolean') updates.is_active = body.is_active
+  if (typeof body.role === 'string' && ['admin', 'manager', 'guest'].includes(body.role)) {
+    updates.role = body.role
+  }
+  if (typeof body.password === 'string' && body.password.length > 0) {
+    updates.password_hash = hashPassword(body.password)
+  }
+
+  // Never allow removing/demoting the last active admin.
+  if (updates.role !== undefined && updates.role !== 'admin' || updates.is_active === false) {
+    const [target] = await db<AdminUserRow[]>`SELECT * FROM admin_users WHERE id = ${id}`
+    if (target?.role === 'admin') {
+      const [{ count }] = await db<[{ count: string }]>`
+        SELECT COUNT(*)::text AS count FROM admin_users WHERE role = 'admin' AND is_active = true
+      `
+      if (parseInt(count) <= 1) return c.json({ error: 'Cannot demote or disable the last active admin' }, 409)
+    }
+  }
+
+  const [row] = await db<AdminUserRow[]>`
+    UPDATE admin_users SET ${db(updates)} WHERE id = ${id} RETURNING *
+  `
+  if (!row) return c.json({ error: 'Not found' }, 404)
+  return c.json(publicUser(row))
+})
+
+app.delete('/api/admin/users/:id', async (c) => {
+  await ensureAdminUsersTable()
+  if (getRole(c) !== 'admin') return c.json({ error: 'Forbidden' }, 403)
+  const { id } = c.req.param()
+  const [target] = await db<AdminUserRow[]>`SELECT * FROM admin_users WHERE id = ${id}`
+  if (!target) return c.json({ error: 'Not found' }, 404)
+  if (target.role === 'admin') {
+    const [{ count }] = await db<[{ count: string }]>`
+      SELECT COUNT(*)::text AS count FROM admin_users WHERE role = 'admin' AND is_active = true
+    `
+    if (parseInt(count) <= 1) return c.json({ error: 'Cannot delete the last active admin' }, 409)
+  }
+  await db`DELETE FROM admin_users WHERE id = ${id}`
+  return c.json({ ok: true })
+})
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Admin: Properties

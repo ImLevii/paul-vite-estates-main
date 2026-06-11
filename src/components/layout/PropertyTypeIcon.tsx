@@ -152,6 +152,9 @@ const ICONS: Record<string, (props: IconProps) => ReactElement> = {
   other: OtherIcon,
 }
 
+/** Icon keys selectable when configuring a property category. */
+export const PROPERTY_TYPE_ICON_KEYS = Object.keys(ICONS)
+
 export function PropertyTypeIcon({ type, ...props }: IconProps & { type: string }) {
   const Icon = ICONS[type] ?? OtherIcon
   return <Icon {...props} />

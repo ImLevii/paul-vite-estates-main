@@ -4,6 +4,30 @@ import { notifyDataChanged } from './data-sync'
 
 export type BookingWithProperty = Booking & { property?: Pick<Property, 'id' | 'title' | 'city' | 'state' | 'property_type'> | null }
 
+export type PropertyType = {
+  id: string
+  value: string
+  label: string
+  icon: string
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type AdminRole = 'admin' | 'manager' | 'guest'
+
+export type AdminUser = {
+  id: string
+  username: string
+  full_name: string
+  email: string
+  role: AdminRole
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 // In dev, Vite proxies /api → http://localhost:3001
 // In production, set VITE_API_URL to your deployed API origin
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
@@ -87,6 +111,10 @@ export const api = {
     list: () => get<HeroSlide[]>('/hero-slides'),
   },
 
+  propertyTypes: {
+    list: () => get<PropertyType[]>('/property-types'),
+  },
+
   properties: {
     list: (params?: { active?: boolean; type?: string; sort?: string }) =>
       get<Property[]>('/properties', {
@@ -106,7 +134,25 @@ export const api = {
 
   admin: {
     login: (data: { username: string; password: string }) =>
-      req<{ token: string }>('POST', '/admin/login', data),
+      req<{ token: string; role: AdminRole }>('POST', '/admin/login', data),
+
+    me: () => get<{ username: string; role: AdminRole }>('/admin/me'),
+
+    propertyTypes: {
+      list: () => get<PropertyType[]>('/admin/property-types'),
+      create: (data: Partial<PropertyType>) => req<PropertyType>('POST', '/admin/property-types', data),
+      update: (id: string, data: Partial<PropertyType>) => req<PropertyType>('PATCH', `/admin/property-types/${id}`, data),
+      delete: (id: string) => req<{ ok: boolean }>('DELETE', `/admin/property-types/${id}`),
+    },
+
+    users: {
+      list: () => get<AdminUser[]>('/admin/users'),
+      create: (data: { username: string; password: string; full_name?: string; email?: string; role?: AdminRole; is_active?: boolean }) =>
+        req<AdminUser>('POST', '/admin/users', data),
+      update: (id: string, data: { password?: string; full_name?: string; email?: string; role?: AdminRole; is_active?: boolean }) =>
+        req<AdminUser>('PATCH', `/admin/users/${id}`, data),
+      delete: (id: string) => req<{ ok: boolean }>('DELETE', `/admin/users/${id}`),
+    },
 
     properties: {
       list: () => get<Property[]>('/admin/properties').then(rows => rows.map(normalizeProperty)),

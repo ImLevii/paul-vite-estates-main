@@ -17,6 +17,8 @@ import { AdminListingEdit } from '@/pages/admin/AdminListingEdit'
 import { AdminBookings } from '@/pages/admin/AdminBookings'
 import { AdminBookingDetail } from '@/pages/admin/AdminBookingDetail'
 import { AdminHero } from '@/pages/admin/AdminHero'
+import { AdminCategories } from '@/pages/admin/AdminCategories'
+import { AdminUsers } from '@/pages/admin/AdminUsers'
 import { AdminSettings } from '@/pages/admin/AdminSettings'
 
 export default function App() {
@@ -56,6 +58,8 @@ export default function App() {
             <Route path="bookings" element={<AdminBookings />} />
             <Route path="bookings/:id" element={<AdminBookingDetail />} />
             <Route path="hero" element={<AdminHero />} />
+            <Route path="categories" element={<AdminCategories />} />
+            <Route path="users" element={<AdminUsers />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
         </Routes>

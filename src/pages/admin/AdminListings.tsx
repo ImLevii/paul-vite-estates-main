@@ -21,7 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { type Property } from '@/lib/supabase'
 import { api } from '@/lib/api'
 import { useLiveData } from '@/hooks/use-live-data'
-import { PROPERTY_TYPES, getPropertyImage } from '@/lib/constants'
+import { getPropertyImage } from '@/lib/constants'
+import { usePropertyTypes } from '@/lib/property-types'
 import { toast } from 'sonner'
 
 export function AdminListings() {
@@ -30,6 +31,7 @@ export function AdminListings() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const propertyTypes = usePropertyTypes()
 
   useEffect(() => {
     loadProperties()
@@ -117,7 +119,7 @@ export function AdminListings() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
-            {PROPERTY_TYPES.map(t => (
+            {propertyTypes.map(t => (
               <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
             ))}
           </SelectContent>

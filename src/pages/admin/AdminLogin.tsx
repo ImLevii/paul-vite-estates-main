@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { HavenMark } from '@/components/layout/HavenMark'
 import { api } from '@/lib/api'
-import { setAdminToken } from '@/lib/admin-auth'
+import { setAdminToken, setAdminRole } from '@/lib/admin-auth'
 import { useSettings } from '@/lib/settings'
 import { toast } from 'sonner'
 
@@ -28,8 +28,9 @@ export function AdminLogin() {
     }
     setLoading(true)
     try {
-      const { token } = await api.admin.login({ username, password })
+      const { token, role } = await api.admin.login({ username, password })
       setAdminToken(token)
+      setAdminRole(role)
       toast.success('Welcome back')
       navigate(from, { replace: true })
     } catch {

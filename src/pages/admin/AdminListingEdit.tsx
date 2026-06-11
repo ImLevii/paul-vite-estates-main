@@ -13,7 +13,8 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { type Property } from '@/lib/supabase'
 import { api } from '@/lib/api'
-import { PROPERTY_TYPES, AMENITIES_LIST } from '@/lib/constants'
+import { AMENITIES_LIST } from '@/lib/constants'
+import { usePropertyTypes } from '@/lib/property-types'
 import { toast } from 'sonner'
 
 const DEFAULT_FORM: Partial<Property> = {
@@ -45,6 +46,7 @@ export function AdminListingEdit() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const isNew = !id
+  const propertyTypes = usePropertyTypes()
 
   const [form, setForm] = useState<Partial<Property>>(DEFAULT_FORM)
   const [photoUrls, setPhotoUrls] = useState<string[]>([''])
@@ -261,7 +263,7 @@ export function AdminListingEdit() {
                   <Select value={form.property_type || 'apartment'} onValueChange={v => setField('property_type', v as Property['property_type'])}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {PROPERTY_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      {propertyTypes.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
