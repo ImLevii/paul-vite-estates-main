@@ -1,6 +1,6 @@
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, Home, Building2, CalendarDays, Settings,
+  LayoutDashboard, Building2, CalendarDays, Settings,
   ChevronLeft, Bell, Search, Images, LogOut
 } from 'lucide-react'
 import {
@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ModeToggle } from '@/components/mode-toggle'
 import { Separator } from '@/components/ui/separator'
+import { HavenMark } from '@/components/layout/HavenMark'
 import { clearAdminToken } from '@/lib/admin-auth'
 import { useSettings } from '@/lib/settings'
 import { toast } from 'sonner'
@@ -52,12 +53,12 @@ export function AdminLayout() {
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild>
                 <Link to="/">
-                  <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-                    <Home className="size-4" />
-                  </div>
+                  <span className="logo-3d flex size-8 shrink-0 items-center justify-center rounded-xl text-primary-foreground">
+                    <HavenMark className="logo-mark size-4" />
+                  </span>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{siteName} Admin</span>
-                    <span className="truncate text-xs text-muted-foreground">Property Management</span>
+                    <span className="wordmark-premium truncate text-[0.95rem] leading-none" data-text={siteName}>{siteName}</span>
+                    <span className="wordmark-sub mt-1">Property Management</span>
                   </div>
                 </Link>
               </SidebarMenuButton>
@@ -102,7 +103,7 @@ export function AdminLayout() {
             <SidebarMenuItem>
               <SidebarMenuButton size="lg">
                 <Avatar className="size-8">
-                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">AD</AvatarFallback>
+                  <AvatarFallback className="admin-medallion text-xs font-semibold">AD</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">Admin User</span>
@@ -122,7 +123,7 @@ export function AdminLayout() {
 
       <SidebarInset>
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-border/60 glass-strong px-4">
+        <header className="admin-topbar sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex flex-1 items-center gap-2">

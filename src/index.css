@@ -1053,6 +1053,140 @@
   }
 
   /* ============================================================
+     PREMIUM ADMIN  (cards · medallions · quick actions · topbar)
+     obsidian jewels + carbon-glass, theme-aware
+     ============================================================ */
+  .admin-card {
+    position: relative;
+    isolation: isolate;
+    border: 1px solid color-mix(in oklab, var(--foreground) 9%, transparent);
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, var(--card) 92%, transparent),
+        color-mix(in oklab, var(--card) 74%, var(--background) 26%));
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 45%, transparent) inset,
+      0 18px 44px -26px color-mix(in oklab, var(--foreground) 32%, transparent);
+    transition:
+      transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.45s ease;
+  }
+  .dark .admin-card {
+    border-color: color-mix(in oklab, white 9%, transparent);
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, white 5%, transparent),
+        color-mix(in oklab, white 1.5%, transparent));
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 8%, transparent) inset,
+      0 24px 60px -30px color-mix(in oklab, black 92%, transparent);
+  }
+  /* platinum hairline along the top edge */
+  .admin-card::after {
+    content: '';
+    position: absolute;
+    inset-inline: 16%;
+    top: -1px;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg,
+      transparent,
+      color-mix(in oklab, var(--foreground) 22%, transparent) 50%,
+      transparent);
+    opacity: 0.5;
+  }
+  .dark .admin-card::after {
+    background: linear-gradient(90deg,
+      transparent,
+      color-mix(in oklab, white 38%, transparent) 50%,
+      transparent);
+    opacity: 0.6;
+  }
+  /* interactive lift on stat / action cards */
+  .admin-card-hover:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in oklab, var(--foreground) 16%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 55%, transparent) inset,
+      0 26px 56px -24px color-mix(in oklab, var(--foreground) 40%, transparent);
+  }
+  .dark .admin-card-hover:hover {
+    border-color: color-mix(in oklab, white 18%, transparent);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 12%, transparent) inset,
+      0 30px 70px -26px color-mix(in oklab, black 95%, transparent);
+  }
+  /* obsidian jewel medallion for stat / action icons (always dark) */
+  .admin-medallion {
+    color: oklch(0.82 0.01 270);
+    border: 1px solid color-mix(in oklab, white 14%, transparent);
+    background:
+      radial-gradient(135% 135% at 30% 8%,
+        oklch(0.34 0.012 270) 0%,
+        oklch(0.21 0.01 270) 52%,
+        oklch(0.12 0.008 270) 100%);
+    box-shadow:
+      0 1px 0 0 color-mix(in oklab, white 20%, transparent) inset,
+      0 -2px 4px 0 color-mix(in oklab, black 55%, transparent) inset,
+      0 12px 26px -14px color-mix(in oklab, black 75%, transparent);
+  }
+  .admin-medallion svg {
+    filter: drop-shadow(0 1px 1px color-mix(in oklab, black 55%, transparent));
+  }
+  /* champagne-platinum metallic stat numerals */
+  .admin-stat-value {
+    background-image: linear-gradient(180deg,
+      oklch(0.99 0 0) 0%,
+      oklch(0.86 0.006 270) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  :root:not(.dark) .admin-stat-value {
+    background-image: linear-gradient(180deg,
+      oklch(0.28 0.012 270) 0%,
+      oklch(0.42 0.014 270) 100%);
+  }
+  /* admin topbar — carbon glass with platinum hairline */
+  .admin-topbar {
+    position: relative;
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, var(--card) 86%, transparent),
+        color-mix(in oklab, var(--card) 66%, transparent));
+    backdrop-filter: blur(20px) saturate(170%);
+    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    border-bottom: 1px solid color-mix(in oklab, var(--foreground) 8%, transparent);
+  }
+  .dark .admin-topbar {
+    background:
+      linear-gradient(180deg,
+        color-mix(in oklab, white 5%, transparent),
+        color-mix(in oklab, white 1.5%, transparent));
+    border-bottom-color: color-mix(in oklab, white 8%, transparent);
+  }
+  .admin-topbar::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 1px;
+    pointer-events: none;
+    background: linear-gradient(90deg,
+      transparent,
+      color-mix(in oklab, var(--foreground) 18%, transparent) 50%,
+      transparent);
+    opacity: 0.4;
+  }
+  .dark .admin-topbar::after {
+    background: linear-gradient(90deg,
+      transparent,
+      color-mix(in oklab, white 28%, transparent) 50%,
+      transparent);
+  }
+
+  /* ============================================================
      PREMIUM ADMIN LOGIN  (cinematic obsidian, brand crest)
      ============================================================ */
   .login-premium {

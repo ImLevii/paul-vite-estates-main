@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Building2, CalendarDays, DollarSign, TrendingUp, ArrowUpRight, ArrowRight, Star } from 'lucide-react'
+import { TrendingUp, ArrowUpRight, ArrowRight, Star } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { ListingsIcon, BookingsIcon, RevenueIcon, RatingIcon } from '@/components/layout/AdminStatIcon'
 import { type Property, type Booking } from '@/lib/supabase'
 import { api } from '@/lib/api'
 import { useLiveData } from '@/hooks/use-live-data'
@@ -88,48 +89,56 @@ export function AdminDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Card>
+        <Card className="admin-card admin-card-hover">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Listings</CardTitle>
-            <Building2 className="size-4 text-muted-foreground" />
+            <span className="admin-medallion flex size-9 items-center justify-center rounded-xl">
+              <ListingsIcon className="size-4.5" />
+            </span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{properties.length}</div>
+            <div className="admin-stat-value text-2xl font-bold">{properties.length}</div>
             <p className="mt-1 text-xs text-muted-foreground">{activeProperties} active</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="admin-card admin-card-hover">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Bookings</CardTitle>
-            <CalendarDays className="size-4 text-muted-foreground" />
+            <span className="admin-medallion flex size-9 items-center justify-center rounded-xl">
+              <BookingsIcon className="size-4.5" />
+            </span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{bookings.length}</div>
+            <div className="admin-stat-value text-2xl font-bold">{bookings.length}</div>
             <p className="mt-1 text-xs text-muted-foreground">{pendingBookings} pending · {confirmedBookings} confirmed</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="admin-card admin-card-hover">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
-            <DollarSign className="size-4 text-muted-foreground" />
+            <span className="admin-medallion flex size-9 items-center justify-center rounded-xl">
+              <RevenueIcon className="size-4.5" />
+            </span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
+            <div className="admin-stat-value text-2xl font-bold">${totalRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
             <p className="mt-1 flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
               <ArrowUpRight className="size-3" /> +12% this month
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="admin-card admin-card-hover">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Avg Rating</CardTitle>
-            <Star className="size-4 text-muted-foreground" />
+            <span className="admin-medallion flex size-9 items-center justify-center rounded-xl">
+              <RatingIcon className="size-4.5" />
+            </span>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="admin-stat-value text-2xl font-bold">
               {properties.length > 0
                 ? (properties.reduce((s, p) => s + (p.rating_avg || 0), 0) / properties.filter(p => p.rating_avg > 0).length || 0).toFixed(2)
                 : '—'}
@@ -141,7 +150,7 @@ export function AdminDashboard() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         {/* Revenue Chart */}
-        <Card className="lg:col-span-3">
+        <Card className="admin-card lg:col-span-3">
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
             <CardDescription>Monthly revenue for 2025</CardDescription>
@@ -160,7 +169,7 @@ export function AdminDashboard() {
         </Card>
 
         {/* Top Properties */}
-        <Card className="lg:col-span-2">
+        <Card className="admin-card lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Top Properties</CardTitle>
@@ -197,7 +206,7 @@ export function AdminDashboard() {
       </div>
 
       {/* Recent Bookings */}
-      <Card>
+      <Card className="admin-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Recent Bookings</CardTitle>
@@ -241,33 +250,33 @@ export function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Button variant="outline" className="h-auto gap-3 p-4 justify-start" asChild>
+        <Button variant="outline" className="admin-card admin-card-hover h-auto gap-3 p-4 justify-start" asChild>
           <Link to="/admin/listings/new">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
-              <Building2 className="size-4" />
-            </div>
+            <span className="admin-medallion flex size-9 items-center justify-center rounded-xl">
+              <ListingsIcon className="size-4.5" />
+            </span>
             <div className="text-left">
               <p className="font-medium">Add Listing</p>
               <p className="text-xs text-muted-foreground">Create a new property</p>
             </div>
           </Link>
         </Button>
-        <Button variant="outline" className="h-auto gap-3 p-4 justify-start" asChild>
+        <Button variant="outline" className="admin-card admin-card-hover h-auto gap-3 p-4 justify-start" asChild>
           <Link to="/admin/bookings">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
-              <CalendarDays className="size-4" />
-            </div>
+            <span className="admin-medallion flex size-9 items-center justify-center rounded-xl">
+              <BookingsIcon className="size-4.5" />
+            </span>
             <div className="text-left">
               <p className="font-medium">Manage Bookings</p>
               <p className="text-xs text-muted-foreground">{pendingBookings} pending requests</p>
             </div>
           </Link>
         </Button>
-        <Button variant="outline" className="h-auto gap-3 p-4 justify-start" asChild>
+        <Button variant="outline" className="admin-card admin-card-hover h-auto gap-3 p-4 justify-start" asChild>
           <Link to="/">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-muted">
-              <TrendingUp className="size-4" />
-            </div>
+            <span className="admin-medallion flex size-9 items-center justify-center rounded-xl">
+              <TrendingUp className="size-4.5" />
+            </span>
             <div className="text-left">
               <p className="font-medium">View Site</p>
               <p className="text-xs text-muted-foreground">Preview public listings</p>
