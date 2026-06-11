@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ChevronLeft, Plus, X, Loader2, Check } from 'lucide-react'
+import { ChevronLeft, Plus, X, Loader2, Check, Upload, ImageUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -50,6 +50,58 @@ export function AdminListingEdit() {
   const [photoUrls, setPhotoUrls] = useState<string[]>([''])
   const [loading, setLoading] = useState(!isNew)
   const [saving, setSaving] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const MAX_UPLOAD_BYTES = 5 * 1024 * 1024 // 5MB per image
+
+  function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(file)
+    })
+  }
+
+  async function addFiles(files: FileList | File[]) {
+    const images = Array.from(files).filter(f => f.type.startsWith('image/'))
+    if (images.length === 0) {
+      toast.error('Please choose image files only')
+      return
+    }
+    const tooLarge = images.filter(f => f.size > MAX_UPLOAD_BYTES)
+    const valid = images.filter(f => f.size <= MAX_UPLOAD_BYTES)
+    if (tooLarge.length > 0) {
+      toast.error(`${tooLarge.length} image(s) skipped — max size is 5MB`)
+    }
+    if (valid.length === 0) return
+    try {
+      const dataUrls = await Promise.all(valid.map(readFileAsDataUrl))
+      setPhotoUrls(urls => {
+        const existing = urls.filter(u => u.trim())
+        return [...existing, ...dataUrls]
+      })
+      toast.success(`${dataUrls.length} photo${dataUrls.length > 1 ? 's' : ''} added`)
+    } catch {
+      toast.error('Failed to read one or more images')
+    }
+  }
+
+  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files && e.target.files.length > 0) {
+      void addFiles(e.target.files)
+      e.target.value = ''
+    }
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault()
+    setDragging(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      void addFiles(e.dataTransfer.files)
+    }
+  }
 
   useEffect(() => {
     if (id) loadProperty(id)
@@ -458,49 +510,110 @@ export function AdminListingEdit() {
           <Card>
             <CardHeader>
               <CardTitle>Property Photos</CardTitle>
-              <p className="text-sm text-muted-foreground">Add URLs for your property images. The first photo will be the primary listing image.</p>
+              <p className="text-sm text-muted-foreground">Upload images from your device or paste image URLs. The first photo will be the primary listing image.</p>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {photoUrls.map((url, i) => (
-                <div key={i} className="flex gap-2">
-                  <div className="relative flex-1">
-                    {i === 0 && (
-                      <Badge className="absolute -top-2 left-2 text-xs z-10">Primary</Badge>
-                    )}
+            <CardContent className="space-y-4">
+              {/* Local upload dropzone */}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => fileInputRef.current?.click()}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click() } }}
+                onDragOver={e => { e.preventDefault(); setDragging(true) }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={handleDrop}
+                className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-8 text-center transition-colors ${dragging ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50 hover:bg-muted/40'}`}
+              >
+                <span className="admin-medallion flex size-11 items-center justify-center rounded-xl">
+                  <ImageUp className="size-5" />
+                </span>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Drag &amp; drop photos here</p>
+                  <p className="text-xs text-muted-foreground">or click to browse · JPG, PNG, WebP · up to 5MB each</p>
+                </div>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileInput}
+              />
+
+              {/* Thumbnail grid */}
+              {photoUrls.some(u => u.trim()) && (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                  {photoUrls.filter(u => u.trim()).map((url, i) => (
+                    <div key={i} className="group relative aspect-4/3 overflow-hidden rounded-lg border">
+                      {i === 0 && (
+                        <Badge className="absolute left-1.5 top-1.5 z-10 text-xs">Primary</Badge>
+                      )}
+                      <img src={url} alt="" className="size-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setPhotoUrls(urls => {
+                          const filtered = urls.filter(u => u.trim()).filter((_, j) => j !== i)
+                          return filtered.length > 0 ? filtered : ['']
+                        })}
+                        className="absolute right-1.5 top-1.5 z-10 flex size-6 items-center justify-center rounded-full bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100"
+                        aria-label="Remove photo"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <Separator />
+
+              {/* URL inputs */}
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">Or add by URL</Label>
+                {photoUrls.map((url, i) => (
+                  <div key={i} className="flex gap-2">
                     <Input
                       placeholder="https://example.com/photo.jpg"
-                      value={url}
+                      value={url.startsWith('data:') ? '' : url}
+                      disabled={url.startsWith('data:')}
                       onChange={e => {
                         const newUrls = [...photoUrls]
                         newUrls[i] = e.target.value
                         setPhotoUrls(newUrls)
                       }}
-                      className={i === 0 ? 'mt-2' : ''}
                     />
+                    {photoUrls.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-muted-foreground"
+                        onClick={() => setPhotoUrls(urls => urls.filter((_, j) => j !== i))}
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    )}
                   </div>
-                  {url && (
-                    <img src={url} alt="" className="size-9 rounded-md object-cover border" onError={e => (e.currentTarget.style.display = 'none')} />
-                  )}
-                  {photoUrls.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-muted-foreground"
-                      onClick={() => setPhotoUrls(urls => urls.filter((_, j) => j !== i))}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  )}
+                ))}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPhotoUrls(urls => [...urls, ''])}
+                    className="gap-2"
+                  >
+                    <Plus className="size-4" /> Add Photo URL
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <Upload className="size-4" /> Upload from device
+                  </Button>
                 </div>
-              ))}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPhotoUrls(urls => [...urls, ''])}
-                className="gap-2"
-              >
-                <Plus className="size-4" /> Add Photo URL
-              </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
