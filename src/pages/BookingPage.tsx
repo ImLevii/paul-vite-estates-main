@@ -143,7 +143,7 @@ export function BookingPage() {
                 <CardHeader>
                   <CardTitle className="text-lg">Your details</CardTitle>
                 </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-4">
+                <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <Label htmlFor="firstName">First name *</Label>
                     <Input id="firstName" value={form.firstName} onChange={e => setForm(f => ({ ...f, firstName: e.target.value }))} required />
@@ -152,15 +152,15 @@ export function BookingPage() {
                     <Label htmlFor="lastName">Last name *</Label>
                     <Input id="lastName" value={form.lastName} onChange={e => setForm(f => ({ ...f, lastName: e.target.value }))} required />
                   </div>
-                  <div className="col-span-2 space-y-1.5">
+                  <div className="sm:col-span-2 space-y-1.5">
                     <Label htmlFor="email">Email address *</Label>
                     <Input id="email" type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} required />
                   </div>
-                  <div className="col-span-2 space-y-1.5">
+                  <div className="sm:col-span-2 space-y-1.5">
                     <Label htmlFor="phone">Phone number</Label>
                     <Input id="phone" type="tel" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} />
                   </div>
-                  <div className="col-span-2 space-y-1.5">
+                  <div className="sm:col-span-2 space-y-1.5">
                     <Label htmlFor="requests">Special requests</Label>
                     <Textarea
                       id="requests"
@@ -180,7 +180,7 @@ export function BookingPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'stripe' | 'paypal')} className="grid grid-cols-2 gap-3">
+                  <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'stripe' | 'paypal')} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Label
                       htmlFor="stripe"
                       className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 transition-colors ${paymentMethod === 'stripe' ? 'border-foreground bg-muted' : 'hover:bg-muted/50'}`}
@@ -219,7 +219,7 @@ export function BookingPage() {
                           onChange={e => setForm(f => ({ ...f, cardNumber: formatCardNumber(e.target.value) }))}
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         <div className="space-y-1.5">
                           <Label>Expiry date</Label>
                           <Input

@@ -141,12 +141,12 @@ export function PropertyDetailPage() {
         </div>
 
         {/* Photo Gallery */}
-        <div className="grid grid-cols-4 grid-rows-2 gap-2 rounded-2xl overflow-hidden h-[400px] border ring-1 ring-black/5 shadow-elevated">
-          <div className="group col-span-2 row-span-2 overflow-hidden">
+        <div className="grid grid-cols-2 gap-2 rounded-2xl overflow-hidden h-auto sm:h-100 sm:grid-cols-4 sm:grid-rows-2 border ring-1 ring-black/5 shadow-elevated">
+          <div className="group col-span-2 row-span-1 aspect-4/3 sm:aspect-auto sm:row-span-2 overflow-hidden">
             <img src={photos[0]} alt={property.title} className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />
           </div>
           {photos.slice(1).map((photo, i) => (
-            <div key={i} className="group col-span-2 row-span-1 overflow-hidden">
+            <div key={i} className="group col-span-1 row-span-1 aspect-4/3 sm:aspect-auto sm:col-span-2 overflow-hidden">
               <img src={photo} alt={`View ${i + 2}`} className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />
             </div>
           ))}
@@ -210,7 +210,7 @@ export function PropertyDetailPage() {
             {property.amenities && property.amenities.length > 0 && (
               <div>
                 <h2 className="scroll-m-20 text-xl font-semibold tracking-tight">What this place offers</h2>
-                <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {(property.amenities as string[]).map(amenity => (
                     <div key={amenity} className="flex items-center gap-2 text-sm">
                       <Check className="size-4 shrink-0 text-primary" />
@@ -226,7 +226,7 @@ export function PropertyDetailPage() {
             {/* Check-in info */}
             <div>
               <h2 className="scroll-m-20 text-xl font-semibold tracking-tight">House rules</h2>
-              <div className="mt-4 grid grid-cols-2 gap-4">
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="flex items-center gap-3">
                   <Clock className="size-5 text-muted-foreground" />
                   <div>

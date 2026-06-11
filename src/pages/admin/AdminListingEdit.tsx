@@ -203,7 +203,7 @@ export function AdminListingEdit() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Property Type</Label>
                   <Select value={form.property_type || 'apartment'} onValueChange={v => setField('property_type', v as Property['property_type'])}>
@@ -226,7 +226,7 @@ export function AdminListingEdit() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="bedrooms">Bedrooms</Label>
                   <Input
@@ -266,7 +266,7 @@ export function AdminListingEdit() {
                   onChange={e => setField('address', e.target.value)}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="city">City *</Label>
                   <Input id="city" value={form.city || ''} onChange={e => setField('city', e.target.value)} />
@@ -293,7 +293,7 @@ export function AdminListingEdit() {
           <Card>
             <CardHeader><CardTitle>Pricing</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="price">Nightly Rate ($) *</Label>
                   <Input
@@ -332,7 +332,7 @@ export function AdminListingEdit() {
           <Card>
             <CardHeader><CardTitle>Booking Settings</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="checkIn">Check-in Time</Label>
                   <Input

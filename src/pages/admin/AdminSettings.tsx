@@ -60,7 +60,7 @@ export function AdminSettings() {
               <CardDescription>Basic configuration for your rental platform</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Site Name</Label>
                   <Input value={settings.siteName} onChange={e => set('siteName', e.target.value)} />
@@ -69,7 +69,7 @@ export function AdminSettings() {
                   <Label>Site URL</Label>
                   <Input value={settings.siteUrl} onChange={e => set('siteUrl', e.target.value)} />
                 </div>
-                <div className="col-span-2 space-y-1.5">
+                <div className="sm:col-span-2 space-y-1.5">
                   <Label>Contact Email</Label>
                   <Input type="email" value={settings.contactEmail} onChange={e => set('contactEmail', e.target.value)} />
                 </div>
@@ -96,7 +96,7 @@ export function AdminSettings() {
               <CardDescription>Default values applied to new property listings</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label>Default Service Fee (%)</Label>
                   <Input type="number" value={settings.defaultServiceFee} onChange={e => set('defaultServiceFee', e.target.value)} />
@@ -111,7 +111,7 @@ export function AdminSettings() {
                 </div>
               </div>
               <Separator />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Default Check-in Time</Label>
                   <Input type="time" value={settings.defaultCheckIn} onChange={e => set('defaultCheckIn', e.target.value)} />
