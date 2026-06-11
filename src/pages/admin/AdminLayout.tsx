@@ -1,7 +1,7 @@
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, CalendarDays, Settings,
-  ChevronLeft, Bell, Search, Images, LogOut, Tags, Users,
+  ChevronLeft, Bell, Search, Images, LogOut, Tags, Users, Link2,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -32,6 +32,7 @@ const navItems = [
   { to: '/admin/listings', label: 'Listings', icon: Building2 },
   { to: '/admin/bookings', label: 'Bookings', icon: CalendarDays },
   { to: '/admin/hero', label: 'Hero Section', icon: Images },
+  { to: '/admin/navigation', label: 'Navigation', icon: Link2 },
   { to: '/admin/categories', label: 'Categories', icon: Tags },
   { to: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
   { to: '/admin/settings', label: 'Settings', icon: Settings },

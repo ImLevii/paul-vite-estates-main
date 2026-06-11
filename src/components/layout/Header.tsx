@@ -3,6 +3,8 @@ import { User, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
 import { useSettings } from '@/lib/settings'
+import { useNavLinks } from '@/lib/nav-links'
+import type { NavLink } from '@/lib/api'
 import { HavenMark } from '@/components/layout/HavenMark'
 import {
   Sheet,
@@ -12,8 +14,29 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 
+function isInternal(href: string): boolean {
+  return href.startsWith('/') && !href.startsWith('//')
+}
+
+function NavItem({ link, className }: { link: NavLink; className?: string }) {
+  if (isInternal(link.href) && !link.new_tab) {
+    return <Link to={link.href} className={className}>{link.label}</Link>
+  }
+  return (
+    <a
+      href={link.href}
+      className={className}
+      target={link.new_tab ? '_blank' : undefined}
+      rel={link.new_tab ? 'noopener noreferrer' : undefined}
+    >
+      {link.label}
+    </a>
+  )
+}
+
 export function Header() {
   const { siteName, brandTagline } = useSettings()
+  const navLinks = useNavLinks()
 
   return (
     <header className="navbar-premium sticky top-0 z-50 w-full">
@@ -28,6 +51,19 @@ export function Header() {
             <span className="wordmark-sub">{brandTagline}</span>
           </span>
         </Link>
+
+        {/* Desktop nav links */}
+        {navLinks.length > 0 && (
+          <nav className="hidden items-center gap-1 md:flex">
+            {navLinks.map(link => (
+              <NavItem
+                key={link.id}
+                link={link}
+                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              />
+            ))}
+          </nav>
+        )}
 
         {/* Right side */}
         <div className="flex items-center gap-2">
@@ -61,6 +97,13 @@ export function Header() {
                 </SheetTitle>
               </SheetHeader>
               <nav className="mt-6 flex flex-col gap-2 px-4">
+                {navLinks.map(link => (
+                  <NavItem
+                    key={link.id}
+                    link={link}
+                    className="w-full rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  />
+                ))}
                 <Button variant="ghost" className="w-full justify-start" asChild>
                   <Link to="/admin">Admin Dashboard</Link>
                 </Button>

@@ -28,6 +28,17 @@ export type AdminUser = {
   updated_at: string
 }
 
+export type NavLink = {
+  id: string
+  label: string
+  href: string
+  new_tab: boolean
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 // In dev, Vite proxies /api → http://localhost:3001
 // In production, set VITE_API_URL to your deployed API origin
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
@@ -115,6 +126,10 @@ export const api = {
     list: () => get<PropertyType[]>('/property-types'),
   },
 
+  navLinks: {
+    list: () => get<NavLink[]>('/nav-links'),
+  },
+
   properties: {
     list: (params?: { active?: boolean; type?: string; sort?: string }) =>
       get<Property[]>('/properties', {
@@ -152,6 +167,13 @@ export const api = {
       update: (id: string, data: { password?: string; full_name?: string; email?: string; role?: AdminRole; is_active?: boolean }) =>
         req<AdminUser>('PATCH', `/admin/users/${id}`, data),
       delete: (id: string) => req<{ ok: boolean }>('DELETE', `/admin/users/${id}`),
+    },
+
+    navLinks: {
+      list: () => get<NavLink[]>('/admin/nav-links'),
+      create: (data: Partial<NavLink>) => req<NavLink>('POST', '/admin/nav-links', data),
+      update: (id: string, data: Partial<NavLink>) => req<NavLink>('PATCH', `/admin/nav-links/${id}`, data),
+      delete: (id: string) => req<{ ok: boolean }>('DELETE', `/admin/nav-links/${id}`),
     },
 
     properties: {

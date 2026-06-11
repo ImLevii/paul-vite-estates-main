@@ -337,6 +337,47 @@ app.get('/api/property-types', async (c) => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Navigation Links (DB-backed) — configurable header menu links.
+// ─────────────────────────────────────────────────────────────────────────────
+
+let navLinksReady = false
+async function ensureNavLinksTable() {
+  if (navLinksReady) return
+  await db.unsafe(`
+    CREATE TABLE IF NOT EXISTS nav_links (
+      id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      label       TEXT NOT NULL,
+      href        TEXT NOT NULL,
+      new_tab     BOOLEAN NOT NULL DEFAULT false,
+      sort_order  INTEGER NOT NULL DEFAULT 0,
+      is_active   BOOLEAN NOT NULL DEFAULT true,
+      created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `)
+  navLinksReady = true
+}
+
+type NavLinkRow = {
+  id: string
+  label: string
+  href: string
+  new_tab: boolean
+  sort_order: number
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+app.get('/api/nav-links', async (c) => {
+  await ensureNavLinksTable()
+  const rows = await db<NavLinkRow[]>`
+    SELECT * FROM nav_links WHERE is_active = true ORDER BY sort_order ASC
+  `
+  return c.json(rows)
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Admin: Auth
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -705,6 +746,50 @@ app.patch('/api/admin/hero-slides/:id', async (c) => {
 app.delete('/api/admin/hero-slides/:id', async (c) => {
   const { id } = c.req.param()
   await db`DELETE FROM hero_slides WHERE id = ${id}`
+  return c.json({ ok: true })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Admin: Navigation Links
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.get('/api/admin/nav-links', async (c) => {
+  await ensureNavLinksTable()
+  const rows = await db<NavLinkRow[]>`SELECT * FROM nav_links ORDER BY sort_order ASC`
+  return c.json(rows)
+})
+
+app.post('/api/admin/nav-links', async (c) => {
+  await ensureNavLinksTable()
+  const body = await c.req.json<Partial<NavLinkRow>>()
+  const { label, href, new_tab = false, sort_order = 0, is_active = true } = body
+  if (!label || !href) return c.json({ error: 'label and href are required' }, 400)
+  const [row] = await db<NavLinkRow[]>`
+    INSERT INTO nav_links (label, href, new_tab, sort_order, is_active)
+    VALUES (${label}, ${href}, ${new_tab}, ${sort_order}, ${is_active})
+    RETURNING *
+  `
+  return c.json(row, 201)
+})
+
+app.patch('/api/admin/nav-links/:id', async (c) => {
+  const { id } = c.req.param()
+  const body = await c.req.json<Record<string, unknown>>()
+  const ALLOWED = new Set(['label', 'href', 'new_tab', 'sort_order', 'is_active'])
+  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+  for (const [k, v] of Object.entries(body)) {
+    if (ALLOWED.has(k)) updates[k] = v
+  }
+  const [row] = await db<NavLinkRow[]>`
+    UPDATE nav_links SET ${db(updates)} WHERE id = ${id} RETURNING *
+  `
+  if (!row) return c.json({ error: 'Not found' }, 404)
+  return c.json(row)
+})
+
+app.delete('/api/admin/nav-links/:id', async (c) => {
+  const { id } = c.req.param()
+  await db`DELETE FROM nav_links WHERE id = ${id}`
   return c.json({ ok: true })
 })
 
