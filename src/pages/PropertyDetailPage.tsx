@@ -286,7 +286,7 @@ export function PropertyDetailPage() {
                 {/* Date Picker */}
                 <div>
                   <p className="mb-2 text-sm font-medium">Select dates</p>
-                  <div className="rounded-lg border p-2">
+                  <div className="rounded-lg border p-2 sm:p-3">
                     <Calendar
                       mode="range"
                       selected={dateRange}
@@ -298,7 +298,8 @@ export function PropertyDetailPage() {
                           format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
                         )
                       }}
-                      className="w-full"
+                      className="w-full [--cell-size:2.6rem] sm:[--cell-size:2.25rem]"
+                      classNames={{ root: 'w-full' }}
                     />
                   </div>
                 </div>

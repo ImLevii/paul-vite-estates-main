@@ -45,11 +45,11 @@ export function AdminSettings() {
       </div>
 
       <Tabs defaultValue="general">
-        <TabsList className="flex w-full md:w-auto">
-          <TabsTrigger value="general" className="flex-1 md:flex-none"><Globe className="size-3.5 mr-1.5" />General</TabsTrigger>
-          <TabsTrigger value="payments" className="flex-1 md:flex-none"><CreditCard className="size-3.5 mr-1.5" />Payments</TabsTrigger>
-          <TabsTrigger value="notifications" className="flex-1 md:flex-none"><Bell className="size-3.5 mr-1.5" />Notifications</TabsTrigger>
-          <TabsTrigger value="security" className="flex-1 md:flex-none"><Shield className="size-3.5 mr-1.5" />Security</TabsTrigger>
+        <TabsList className="flex w-full max-w-full justify-start overflow-x-auto md:w-auto">
+          <TabsTrigger value="general" className="shrink-0 whitespace-nowrap md:flex-none"><Globe className="size-3.5 mr-1.5" />General</TabsTrigger>
+          <TabsTrigger value="payments" className="shrink-0 whitespace-nowrap md:flex-none"><CreditCard className="size-3.5 mr-1.5" />Payments</TabsTrigger>
+          <TabsTrigger value="notifications" className="shrink-0 whitespace-nowrap md:flex-none"><Bell className="size-3.5 mr-1.5" />Notifications</TabsTrigger>
+          <TabsTrigger value="security" className="shrink-0 whitespace-nowrap md:flex-none"><Shield className="size-3.5 mr-1.5" />Security</TabsTrigger>
         </TabsList>
 
         {/* General */}

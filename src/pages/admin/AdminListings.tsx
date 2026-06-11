@@ -144,7 +144,7 @@ export function AdminListings() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {filtered.map(property => (
             <Card key={property.id} className="overflow-hidden">
               <CardContent className="p-0">

@@ -167,7 +167,7 @@ export function AdminNavigation() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {links.map((l, i) => (
             <Card key={l.id} className={l.is_active ? '' : 'opacity-60'}>
               <CardContent className="flex items-center gap-4 py-3">

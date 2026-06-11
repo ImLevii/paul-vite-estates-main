@@ -170,7 +170,7 @@ export function AdminCategories() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {types.map((t, i) => (
             <Card key={t.id} className={t.is_active ? '' : 'opacity-60'}>
               <CardContent className="flex items-center gap-4 py-3">
@@ -185,12 +185,12 @@ export function AdminCategories() {
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted">
                   <PropertyTypeIcon type={t.icon || 'other'} className="size-5" />
                 </span>
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{t.label}</span>
+                    <span className="truncate font-medium">{t.label}</span>
                     {!t.is_active && <Badge variant="secondary">Hidden</Badge>}
                   </div>
-                  <span className="text-xs text-muted-foreground">{t.value}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{t.value}</span>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => toggleActive(t)} title={t.is_active ? 'Hide' : 'Show'}>
                   {t.is_active ? <Eye className="size-4" /> : <EyeOff className="size-4" />}

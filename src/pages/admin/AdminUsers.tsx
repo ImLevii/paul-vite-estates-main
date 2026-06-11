@@ -173,7 +173,7 @@ export function AdminUsers() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {users.map(u => (
             <Card key={u.id} className={u.is_active ? '' : 'opacity-60'}>
               <CardContent className="flex items-center gap-4 py-3">
@@ -182,12 +182,12 @@ export function AdminUsers() {
                     {initials(u.full_name, u.username)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{u.full_name || u.username}</span>
+                    <span className="truncate font-medium">{u.full_name || u.username}</span>
                     {!u.is_active && <Badge variant="secondary">Disabled</Badge>}
                   </div>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="block truncate text-xs text-muted-foreground">
                     @{u.username}{u.email ? ` · ${u.email}` : ''}
                   </span>
                 </div>
