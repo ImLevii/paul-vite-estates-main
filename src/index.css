@@ -1182,7 +1182,9 @@
   }
   .login-input {
     color: oklch(0.96 0.004 270) !important;
-    height: 2.6rem;
+    background: transparent !important;
+    height: 2.75rem;
+    font-size: 0.95rem;
   }
   .login-input::placeholder {
     color: oklch(0.56 0.012 270);
