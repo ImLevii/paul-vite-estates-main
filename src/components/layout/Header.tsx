@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { User, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,9 +19,22 @@ function isInternal(href: string): boolean {
   return href.startsWith('/') && !href.startsWith('//')
 }
 
-function NavItem({ link, className }: { link: NavLink; className?: string }) {
+function NavItem({
+  link,
+  className,
+  active,
+}: {
+  link: NavLink
+  className?: string
+  active?: boolean
+}) {
+  const activeProps = active ? { 'data-active': 'true' as const } : {}
   if (isInternal(link.href) && !link.new_tab) {
-    return <Link to={link.href} className={className}>{link.label}</Link>
+    return (
+      <Link to={link.href} className={className} {...activeProps}>
+        {link.label}
+      </Link>
+    )
   }
   return (
     <a
@@ -29,6 +42,7 @@ function NavItem({ link, className }: { link: NavLink; className?: string }) {
       className={className}
       target={link.new_tab ? '_blank' : undefined}
       rel={link.new_tab ? 'noopener noreferrer' : undefined}
+      {...activeProps}
     >
       {link.label}
     </a>
@@ -38,7 +52,14 @@ function NavItem({ link, className }: { link: NavLink; className?: string }) {
 export function Header() {
   const { siteName, brandTagline } = useSettings()
   const navLinks = useNavLinks()
+  const location = useLocation()
   const [scrolled, setScrolled] = useState(false)
+
+  const isActive = (href: string): boolean => {
+    if (!isInternal(href)) return false
+    if (href === '/') return location.pathname === '/'
+    return location.pathname === href || location.pathname.startsWith(`${href}/`)
+  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -71,7 +92,8 @@ export function Header() {
               <NavItem
                 key={link.id}
                 link={link}
-                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                active={isActive(link.href)}
+                className="nav-pill px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
               />
             ))}
           </nav>
@@ -113,7 +135,8 @@ export function Header() {
                   <NavItem
                     key={link.id}
                     link={link}
-                    className="w-full rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    active={isActive(link.href)}
+                    className="nav-pill w-full px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
                   />
                 ))}
                 <Button variant="ghost" className="w-full justify-start" asChild>
