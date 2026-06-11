@@ -143,14 +143,14 @@ export function AdminNavigation() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">Navigation</h1>
           <p className="text-sm text-muted-foreground">
             Configure the links shown in the site header menu
           </p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="w-full sm:w-auto">
           <Plus className="size-4" /> Add Link
         </Button>
       </div>
@@ -170,7 +170,7 @@ export function AdminNavigation() {
         <div className="grid grid-cols-1 gap-3">
           {links.map((l, i) => (
             <Card key={l.id} className={l.is_active ? '' : 'opacity-60'}>
-              <CardContent className="flex items-center gap-4 py-3">
+              <CardContent className="flex items-center gap-2 py-3 sm:gap-4">
                 <div className="flex flex-col">
                   <Button variant="ghost" size="icon" className="size-6" onClick={() => move(i, -1)} disabled={i === 0}>
                     <ArrowUp className="size-3.5" />
@@ -179,26 +179,28 @@ export function AdminNavigation() {
                     <ArrowDown className="size-3.5" />
                   </Button>
                 </div>
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border bg-muted">
+                <span className="hidden size-10 shrink-0 items-center justify-center rounded-xl border bg-muted sm:flex">
                   <Link2 className="size-5" />
                 </span>
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium">{l.label}</span>
-                    {l.new_tab && <Badge variant="secondary" className="gap-1"><ExternalLink className="size-3" />New tab</Badge>}
-                    {!l.is_active && <Badge variant="secondary">Hidden</Badge>}
+                    <span className="truncate font-medium">{l.label}</span>
+                    {l.new_tab && <Badge variant="secondary" className="hidden gap-1 sm:inline-flex"><ExternalLink className="size-3" />New tab</Badge>}
+                    {!l.is_active && <Badge variant="secondary" className="shrink-0">Hidden</Badge>}
                   </div>
-                  <span className="text-xs text-muted-foreground">{l.href}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{l.href}</span>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => toggleActive(l)} title={l.is_active ? 'Hide' : 'Show'}>
-                  {l.is_active ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(l)}>
-                  <Pencil className="size-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(l.id)}>
-                  <Trash2 className="size-4" />
-                </Button>
+                <div className="flex shrink-0 items-center">
+                  <Button variant="ghost" size="icon-sm" onClick={() => toggleActive(l)} title={l.is_active ? 'Hide' : 'Show'}>
+                    {l.is_active ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(l)}>
+                    <Pencil className="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" className="text-destructive" onClick={() => setDeleteId(l.id)}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

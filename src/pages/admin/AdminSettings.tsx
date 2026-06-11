@@ -35,12 +35,12 @@ export function AdminSettings() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">Settings</h1>
           <p className="text-sm text-muted-foreground">Configure your platform settings</p>
         </div>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
           {saving ? <><Loader2 className="size-4 animate-spin" /> Saving...</> : <><Save className="size-4" /> Save Changes</>}
         </Button>
       </div>

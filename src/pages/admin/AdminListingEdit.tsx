@@ -206,19 +206,19 @@ export function AdminListingEdit() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon-sm" asChild>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Button variant="ghost" size="icon-sm" asChild className="shrink-0">
             <Link to="/admin/listings"><ChevronLeft className="size-5" /></Link>
           </Button>
-          <div>
+          <div className="min-w-0">
             <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">
               {isNew ? 'New Listing' : 'Edit Listing'}
             </h1>
-            <p className="text-sm text-muted-foreground">{isNew ? 'Configure your new property' : form.title}</p>
+            <p className="truncate text-sm text-muted-foreground">{isNew ? 'Configure your new property' : form.title}</p>
           </div>
         </div>
-        <Button onClick={handleSave} disabled={saving}>
+        <Button onClick={handleSave} disabled={saving} className="shrink-0">
           {saving ? <><Loader2 className="size-4 animate-spin" /> Saving...</> : <><Check className="size-4" /> {isNew ? 'Create Listing' : 'Save Changes'}</>}
         </Button>
       </div>

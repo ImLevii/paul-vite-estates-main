@@ -72,12 +72,12 @@ export function AdminBookingDetail() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon-sm" asChild>
+        <Button variant="ghost" size="icon-sm" asChild className="shrink-0">
           <Link to="/admin/bookings"><ChevronLeft className="size-5" /></Link>
         </Button>
-        <div>
+        <div className="min-w-0">
           <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">Booking Details</h1>
-          <p className="font-mono text-xs text-muted-foreground">{booking.id}</p>
+          <p className="truncate font-mono text-xs text-muted-foreground">{booking.id}</p>
         </div>
       </div>
 
@@ -89,7 +89,7 @@ export function AdminBookingDetail() {
               <CardTitle>Status Management</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Booking Status</p>
                   <div className="flex items-center gap-2">
@@ -132,7 +132,7 @@ export function AdminBookingDetail() {
               <CardTitle className="flex items-center gap-2"><CalendarDays className="size-4" /> Stay Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Check-in</p>
                   <p className="font-medium">{format(parseISO(booking.check_in), 'EEEE, MMM d, yyyy')}</p>

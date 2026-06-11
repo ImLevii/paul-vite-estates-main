@@ -149,14 +149,14 @@ export function AdminUsers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">Users</h1>
           <p className="text-sm text-muted-foreground">
             Manage who can access the admin dashboard and their roles
           </p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="w-full sm:w-auto">
           <Plus className="size-4" /> Add User
         </Button>
       </div>
@@ -176,7 +176,7 @@ export function AdminUsers() {
         <div className="grid grid-cols-1 gap-3">
           {users.map(u => (
             <Card key={u.id} className={u.is_active ? '' : 'opacity-60'}>
-              <CardContent className="flex items-center gap-4 py-3">
+              <CardContent className="flex items-center gap-2 py-3 sm:gap-4">
                 <Avatar className="size-10">
                   <AvatarFallback className="admin-medallion text-xs font-semibold">
                     {initials(u.full_name, u.username)}
@@ -185,13 +185,13 @@ export function AdminUsers() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium">{u.full_name || u.username}</span>
-                    {!u.is_active && <Badge variant="secondary">Disabled</Badge>}
+                    {!u.is_active && <Badge variant="secondary" className="shrink-0">Disabled</Badge>}
                   </div>
                   <span className="block truncate text-xs text-muted-foreground">
                     @{u.username}{u.email ? ` · ${u.email}` : ''}
                   </span>
                 </div>
-                <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className="gap-1">
+                <Badge variant={u.role === 'admin' ? 'default' : 'secondary'} className="shrink-0 gap-1">
                   {u.role === 'admin'
                     ? <ShieldCheck className="size-3" />
                     : u.role === 'manager'
@@ -199,12 +199,14 @@ export function AdminUsers() {
                       : <UserIcon className="size-3" />}
                   {ROLE_LABEL[u.role]}
                 </Badge>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(u)}>
-                  <Pencil className="size-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(u.id)}>
-                  <Trash2 className="size-4" />
-                </Button>
+                <div className="flex shrink-0 items-center">
+                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(u)}>
+                    <Pencil className="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" className="text-destructive" onClick={() => setDeleteId(u.id)}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

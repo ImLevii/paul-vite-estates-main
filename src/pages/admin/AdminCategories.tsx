@@ -146,14 +146,14 @@ export function AdminCategories() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="scroll-m-20 text-2xl font-bold tracking-tight">Categories</h1>
           <p className="text-sm text-muted-foreground">
             Configure the property type filters shown on the homepage
           </p>
         </div>
-        <Button onClick={openCreate}>
+        <Button onClick={openCreate} className="w-full sm:w-auto">
           <Plus className="size-4" /> Add Category
         </Button>
       </div>
@@ -173,7 +173,7 @@ export function AdminCategories() {
         <div className="grid grid-cols-1 gap-3">
           {types.map((t, i) => (
             <Card key={t.id} className={t.is_active ? '' : 'opacity-60'}>
-              <CardContent className="flex items-center gap-4 py-3">
+              <CardContent className="flex items-center gap-2 py-3 sm:gap-4">
                 <div className="flex flex-col">
                   <Button variant="ghost" size="icon" className="size-6" onClick={() => move(i, -1)} disabled={i === 0}>
                     <ArrowUp className="size-3.5" />
@@ -188,19 +188,21 @@ export function AdminCategories() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <span className="truncate font-medium">{t.label}</span>
-                    {!t.is_active && <Badge variant="secondary">Hidden</Badge>}
+                    {!t.is_active && <Badge variant="secondary" className="shrink-0">Hidden</Badge>}
                   </div>
                   <span className="block truncate text-xs text-muted-foreground">{t.value}</span>
                 </div>
-                <Button variant="ghost" size="icon" onClick={() => toggleActive(t)} title={t.is_active ? 'Hide' : 'Show'}>
-                  {t.is_active ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-                </Button>
-                <Button variant="ghost" size="icon" onClick={() => openEdit(t)}>
-                  <Pencil className="size-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteId(t.id)}>
-                  <Trash2 className="size-4" />
-                </Button>
+                <div className="flex shrink-0 items-center">
+                  <Button variant="ghost" size="icon-sm" onClick={() => toggleActive(t)} title={t.is_active ? 'Hide' : 'Show'}>
+                    {t.is_active ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(t)}>
+                    <Pencil className="size-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" className="text-destructive" onClick={() => setDeleteId(t.id)}>
+                    <Trash2 className="size-4" />
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
