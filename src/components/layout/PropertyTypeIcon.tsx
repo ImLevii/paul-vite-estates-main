@@ -1,8 +1,8 @@
-import type { SVGProps } from 'react'
+import type { SVGProps, ReactNode, ReactElement } from 'react'
 
 type IconProps = SVGProps<SVGSVGElement> & { strokeWidth?: number }
 
-function Svg({ strokeWidth = 1.6, children, ...props }: IconProps & { children: React.ReactNode }) {
+function Svg({ strokeWidth = 1.6, children, ...props }: IconProps & { children: ReactNode }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -139,7 +139,7 @@ function OtherIcon(props: IconProps) {
   )
 }
 
-const ICONS: Record<string, (props: IconProps) => JSX.Element> = {
+const ICONS: Record<string, (props: IconProps) => ReactElement> = {
   all: AllIcon,
   apartment: ApartmentIcon,
   house: HouseIcon,
