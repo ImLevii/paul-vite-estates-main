@@ -9,7 +9,7 @@ Before deploying, make sure the project is linked:
 ```bash
 vercel link
 ```
-
+ 
 Then sync the required local env vars from `.env.local` into the linked Vercel project:
 
 ```bash
