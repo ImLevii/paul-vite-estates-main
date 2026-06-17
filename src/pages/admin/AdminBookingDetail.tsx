@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ChevronLeft, CalendarDays, User, CreditCard, Home, Clock, FileText, Trash2 } from 'lucide-react'
+import { ChevronLeft, CalendarDays, User, CreditCard, Home, Clock, FileText, Trash2, Mail, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -86,6 +86,11 @@ export function AdminBookingDetail() {
 
   const status = BOOKING_STATUSES[booking.status]
   const payStatus = PAYMENT_STATUSES[booking.payment_status]
+  const emailStatus = booking.confirmation_email_sent_at
+    ? { label: 'Email sent', color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' }
+    : booking.confirmation_email_error
+      ? { label: 'Email pending', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }
+      : { label: 'Email queued', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' }
 
   return (
     <div className="space-y-6">
@@ -146,6 +151,30 @@ export function AdminBookingDetail() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <p className="text-sm font-medium">Confirmation Email</p>
+                  <div className="flex flex-col gap-2 rounded-lg border bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2">
+                      <Badge className={emailStatus.color}>{emailStatus.label}</Badge>
+                      {booking.confirmation_email_sent_at ? (
+                        <span className="text-xs text-muted-foreground">
+                          <CheckCircle2 className="mr-1 inline size-3.5 align-text-bottom text-green-600" />
+                          Sent {formatDateTimeInAppTimeZone(booking.confirmation_email_sent_at)}
+                        </span>
+                      ) : booking.confirmation_email_error ? (
+                        <span className="text-xs text-muted-foreground">
+                          <AlertCircle className="mr-1 inline size-3.5 align-text-bottom text-red-600" />
+                          Last error: {booking.confirmation_email_error}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          <Mail className="mr-1 inline size-3.5 align-text-bottom" />
+                          Waiting for the server to send the confirmation email.
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

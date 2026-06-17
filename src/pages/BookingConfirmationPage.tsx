@@ -1,12 +1,42 @@
+import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { CheckCircle, Home, CalendarDays, Mail, ArrowRight } from 'lucide-react'
+import { CheckCircle, Home, CalendarDays, Mail, ArrowRight, Loader2, AlertCircle, Send } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Header } from '@/components/layout/Header'
+import { api } from '@/lib/api'
+import { type Booking } from '@/lib/supabase'
 
 export function BookingConfirmationPage() {
   const { id } = useParams<{ id: string }>()
+  const [booking, setBooking] = useState<Booking | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!id) {
+      setLoading(false)
+      return
+    }
+
+    let active = true
+    api.bookings
+      .get(id)
+      .then((data) => {
+        if (active) setBooking(data)
+      })
+      .catch(() => {
+        if (active) setBooking(null)
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [id])
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,7 +79,33 @@ export function BookingConfirmationPage() {
               </div>
               <div>
                 <p className="font-medium">Confirmation Email</p>
-                <p className="text-sm text-muted-foreground">A confirmation has been sent to your email address</p>
+                {loading ? (
+                  <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="size-3.5 animate-spin" /> Checking delivery status...
+                  </p>
+                ) : booking?.confirmation_email_sent_at ? (
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                      <Send className="mr-1 size-3.5" /> Sent
+                    </Badge>
+                    <p className="text-sm text-muted-foreground">
+                      A confirmation has been sent to {booking.guest_email || 'your email address'}.
+                    </p>
+                  </div>
+                ) : booking?.confirmation_email_error ? (
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <Badge variant="destructive">
+                      <AlertCircle className="mr-1 size-3.5" /> Pending resend
+                    </Badge>
+                    <p className="text-sm text-muted-foreground">
+                      We saved your booking, but the email is still being retried.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    We saved your booking and are preparing the confirmation email.
+                  </p>
+                )}
               </div>
             </div>
 
@@ -64,7 +120,7 @@ export function BookingConfirmationPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">2</span>
-                  The host will confirm your reservation within 24 hours
+                  Your booking is already confirmed in the system after payment
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold">3</span>

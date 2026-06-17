@@ -181,6 +181,16 @@ export function AdminBookings() {
                         <Badge className={`text-xs ${status?.color}`}>{status?.label}</Badge>
                         <Badge variant="outline" className={`text-xs ${payStatus?.color}`}>{payStatus?.label}</Badge>
                         <Badge variant="outline" className="text-xs capitalize">{booking.payment_method}</Badge>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${booking.confirmation_email_sent_at
+                            ? 'border-green-200 bg-green-50 text-green-700 dark:border-green-900/50 dark:bg-green-900/20 dark:text-green-300'
+                            : booking.confirmation_email_error
+                              ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-300'
+                              : 'border-yellow-200 bg-yellow-50 text-yellow-700 dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-300'}`}
+                        >
+                          {booking.confirmation_email_sent_at ? 'Email sent' : booking.confirmation_email_error ? 'Email retrying' : 'Email queued'}
+                        </Badge>
                       </div>
                       {booking.guest_email && (
                         <p className="text-sm text-muted-foreground">{booking.guest_email}</p>
