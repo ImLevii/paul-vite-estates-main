@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { TrendingUp, ArrowUpRight, ArrowDownRight, ArrowRight, Star } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
@@ -24,32 +24,6 @@ const chartConfig = {
 
 const REV_UP = 'oklch(0.72 0.17 155)'
 const REV_DOWN = 'oklch(0.64 0.21 25)'
-
-// Demo chart data
-const revenueData = [
-  { month: 'Jan', revenue: 4200, bookings: 12 },
-  { month: 'Feb', revenue: 5800, bookings: 18 },
-  { month: 'Mar', revenue: 7200, bookings: 22 },
-  { month: 'Apr', revenue: 6500, bookings: 20 },
-  { month: 'May', revenue: 9100, bookings: 28 },
-  { month: 'Jun', revenue: 11400, bookings: 35 },
-]
-
-// directional dot: green when revenue rose vs prior month, red when it fell
-function RevenueDot(props: { cx?: number; cy?: number; index?: number }) {
-  const { cx, cy, index } = props
-  if (cx == null || cy == null || index == null) return null
-  const prev = revenueData[index - 1]
-  const curr = revenueData[index]
-  const up = !prev || curr.revenue >= prev.revenue
-  const color = up ? REV_UP : REV_DOWN
-  return (
-    <g>
-      <circle cx={cx} cy={cy} r={6} fill={color} opacity={0.18} />
-      <circle cx={cx} cy={cy} r={3.2} fill={color} stroke="var(--card)" strokeWidth={1.5} />
-    </g>
-  )
-}
 
 export function AdminDashboard() {
   const [properties, setProperties] = useState<Property[]>([])
@@ -81,9 +55,59 @@ export function AdminDashboard() {
   const activeProperties = properties.filter(p => p.is_active).length
   const pendingBookings = bookings.filter(b => b.status === 'pending').length
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length
-  const totalRevenue = bookings
-    .filter(b => b.payment_status === 'paid' || b.payment_status === 'authorized')
-    .reduce((sum, b) => sum + b.total_price, 0)
+  const paidBookings = useMemo(
+    () => bookings.filter(b => b.payment_status === 'paid' || b.payment_status === 'authorized'),
+    [bookings],
+  )
+  const totalRevenue = paidBookings.reduce((sum, b) => sum + b.total_price, 0)
+
+  const chartYear = new Date().getFullYear()
+  const revenueData = useMemo(() => {
+    const monthly = Array.from({ length: 12 }, (_, i) => ({
+      month: format(new Date(chartYear, i, 1), 'MMM'),
+      revenue: 0,
+      bookings: 0,
+    }))
+
+    for (const booking of paidBookings) {
+      const date = parseISO(booking.created_at)
+      if (Number.isNaN(date.getTime()) || date.getFullYear() !== chartYear) continue
+      const monthIndex = date.getMonth()
+      monthly[monthIndex].revenue += booking.total_price
+      monthly[monthIndex].bookings += 1
+    }
+
+    return monthly
+  }, [paidBookings, chartYear])
+
+  const monthOverMonth = useMemo(() => {
+    const monthIndex = new Date().getMonth()
+    const currentMonthRevenue = revenueData[monthIndex]?.revenue ?? 0
+    const previousMonthRevenue = monthIndex > 0 ? (revenueData[monthIndex - 1]?.revenue ?? 0) : 0
+    if (previousMonthRevenue <= 0) {
+      return {
+        up: currentMonthRevenue >= previousMonthRevenue,
+        pct: currentMonthRevenue > 0 ? 100 : 0,
+      }
+    }
+    const pct = ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100
+    return { up: pct >= 0, pct: Math.abs(pct) }
+  }, [revenueData])
+
+  function RevenueDot(props: { cx?: number; cy?: number; index?: number }) {
+    const { cx, cy, index } = props
+    if (cx == null || cy == null || index == null) return null
+    const prev = revenueData[index - 1]
+    const curr = revenueData[index]
+    const up = !prev || curr.revenue >= prev.revenue
+    const color = up ? REV_UP : REV_DOWN
+    return (
+      <g>
+        <circle cx={cx} cy={cy} r={6} fill={color} opacity={0.18} />
+        <circle cx={cx} cy={cy} r={3.2} fill={color} stroke="var(--card)" strokeWidth={1.5} />
+      </g>
+    )
+  }
 
   const recentBookings = bookings.slice(0, 5)
 
@@ -143,8 +167,9 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="admin-stat-value text-2xl font-bold">${totalRevenue.toLocaleString('en-US', { maximumFractionDigits: 0 })}</div>
-            <p className="mt-1 flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-              <ArrowUpRight className="size-3" /> +12% this month
+            <p className={`mt-1 flex items-center gap-1 text-xs ${monthOverMonth.up ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              {monthOverMonth.up ? <ArrowUpRight className="size-3" /> : <ArrowDownRight className="size-3" />}
+              {monthOverMonth.up ? '+' : '-'}{monthOverMonth.pct.toFixed(1)}% vs previous month
             </p>
           </CardContent>
         </Card>
@@ -173,13 +198,11 @@ export function AdminDashboard() {
           <CardHeader className="flex flex-row items-start justify-between">
             <div className="space-y-1.5">
               <CardTitle>Revenue Overview</CardTitle>
-              <CardDescription>Monthly revenue for 2025</CardDescription>
+              <CardDescription>Monthly revenue for {chartYear}</CardDescription>
             </div>
             {(() => {
-              const first = revenueData[0].revenue
-              const last = revenueData[revenueData.length - 1].revenue
-              const pct = first > 0 ? ((last - first) / first) * 100 : 0
-              const up = pct >= 0
+              const up = monthOverMonth.up
+              const pct = monthOverMonth.pct
               return (
                 <span
                   className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium"
@@ -190,7 +213,7 @@ export function AdminDashboard() {
                   }}
                 >
                   {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
-                  {up ? '+' : ''}{pct.toFixed(1)}%
+                  {up ? '+' : '-'}{pct.toFixed(1)}%
                 </span>
               )
             })()}
@@ -212,7 +235,12 @@ export function AdminDashboard() {
                 </defs>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
                 <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
-                <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12 }} tickFormatter={v => `$${v / 1000}k`} />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 12 }}
+                  tickFormatter={v => v >= 1000 ? `$${Math.round(v / 1000)}k` : `$${v}`}
+                />
                 <Tooltip content={<ChartTooltipContent />} cursor={{ stroke: 'var(--border)', strokeDasharray: '4 4' }} />
                 <Area
                   type="monotone"

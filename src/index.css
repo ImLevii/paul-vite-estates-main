@@ -927,6 +927,95 @@
       0 0 18px -4px color-mix(in oklab, white 14%, transparent);
   }
 
+  .admin-notify-icon {
+    color: color-mix(in oklab, var(--foreground) 82%, transparent);
+    filter: drop-shadow(0 1px 0 color-mix(in oklab, white 55%, transparent));
+    transition:
+      transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+      color 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+      filter 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .nav-action:hover .admin-notify-icon {
+    transform: translateY(-0.5px) scale(1.06);
+    color: color-mix(in oklab, var(--brand) 75%, var(--foreground));
+    filter:
+      drop-shadow(0 1px 0 color-mix(in oklab, white 60%, transparent))
+      drop-shadow(0 0 8px color-mix(in oklab, var(--brand) 30%, transparent));
+  }
+
+  .admin-notify-dot {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in oklab, white 45%, transparent);
+    background: linear-gradient(
+      180deg,
+      oklch(0.82 0.2 152),
+      oklch(0.66 0.16 150)
+    );
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--background) 86%, transparent),
+      0 0 0 0 color-mix(in oklab, oklch(0.78 0.18 152) 0%, transparent),
+      0 0 12px -3px color-mix(in oklab, oklch(0.78 0.18 152) 72%, transparent);
+    animation: notify-dot-pulse 1.8s ease-out infinite;
+  }
+  .admin-notify-dot::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    border: 1px solid color-mix(in oklab, oklch(0.78 0.18 152) 45%, transparent);
+    opacity: 0;
+    transform: scale(1);
+    animation: notify-dot-ring 1.8s ease-out infinite;
+    pointer-events: none;
+  }
+  .dark .admin-notify-dot {
+    border-color: color-mix(in oklab, white 28%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, black 55%, transparent),
+      0 0 0 0 color-mix(in oklab, oklch(0.78 0.18 152) 0%, transparent),
+      0 0 14px -3px color-mix(in oklab, oklch(0.78 0.18 152) 76%, transparent);
+  }
+
+  @keyframes notify-dot-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow:
+        0 0 0 1px color-mix(in oklab, var(--background) 86%, transparent),
+        0 0 0 0 color-mix(in oklab, oklch(0.78 0.18 152) 0%, transparent),
+        0 0 12px -3px color-mix(in oklab, oklch(0.78 0.18 152) 72%, transparent);
+    }
+    45% {
+      transform: scale(1.08);
+      box-shadow:
+        0 0 0 1px color-mix(in oklab, var(--background) 86%, transparent),
+        0 0 0 4px color-mix(in oklab, oklch(0.78 0.18 152) 18%, transparent),
+        0 0 16px -2px color-mix(in oklab, oklch(0.78 0.18 152) 82%, transparent);
+    }
+  }
+  @keyframes notify-dot-ring {
+    0% {
+      opacity: 0.65;
+      transform: scale(1);
+    }
+    80% {
+      opacity: 0;
+      transform: scale(1.5);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1.5);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .admin-notify-dot,
+    .admin-notify-dot::after {
+      animation: none;
+    }
+  }
+
   /* ============================================================
      PREMIUM NAV LINK PILLS
      glassy rounded hover pill + persistent active-route highlight

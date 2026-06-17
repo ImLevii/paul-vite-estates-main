@@ -175,13 +175,16 @@ export function AdminLayout() {
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative" aria-label="Open notifications">
-                  <Bell className="size-4" />
+                <Button variant="outline" size="icon" className="nav-action relative" aria-label="Open notifications">
+                  <Bell className="admin-notify-icon size-4" />
                   {unreadCount > 0 && (
-                    <span className="absolute right-1.5 top-1.5 flex min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
+                    <span className="admin-notify-dot absolute right-1.5 top-1.5" aria-hidden="true" />
                   )}
+                  <span className="sr-only">
+                    {unreadCount > 0
+                      ? `${unreadCount} unread notifications`
+                      : 'No unread notifications'}
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-88 p-0">
