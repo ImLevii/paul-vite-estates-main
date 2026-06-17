@@ -167,6 +167,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
   h1, h2, h3, h4, h5 {
     font-family: var(--font-display);
@@ -1563,7 +1565,8 @@
     color: oklch(0.96 0.004 270) !important;
     background: transparent !important;
     height: 2.75rem;
-    font-size: 0.95rem;
+    font-size: 1rem;
+    line-height: 1.25rem;
   }
   .login-input::placeholder {
     color: oklch(0.56 0.012 270);

@@ -41,7 +41,7 @@ export function AdminLogin() {
   }
 
   return (
-    <div className="login-premium relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+    <div className="login-premium relative flex min-h-svh items-start justify-center overflow-x-hidden overflow-y-auto p-4 py-6 sm:items-center sm:py-4">
       {/* cinematic obsidian backdrop */}
       <div className="login-aurora pointer-events-none absolute inset-0 -z-10" />
       <div className="pointer-events-none absolute inset-0 -z-10 bg-grid mask-fade-b opacity-[0.07]" />
@@ -56,7 +56,7 @@ export function AdminLogin() {
           <ArrowLeft className="size-4" /> Back to site
         </Link>
 
-        <div className="login-card relative overflow-hidden rounded-2xl p-8">
+        <div className="login-card relative overflow-hidden rounded-2xl p-6 sm:p-8">
           <div className="flex flex-col items-center gap-4 text-center">
             <span className="logo-3d flex size-14 items-center justify-center rounded-2xl text-primary-foreground">
               <HavenMark className="logo-mark size-7" />
