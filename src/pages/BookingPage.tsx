@@ -106,7 +106,6 @@ export function BookingPage() {
     try {
       const booking = await api.bookings.create({
         property_id: property.id,
-        guest_id: '00000000-0000-0000-0000-000000000000', // demo user id
         check_in: checkIn,
         check_out: checkOut,
         guests_count: guestsCount,

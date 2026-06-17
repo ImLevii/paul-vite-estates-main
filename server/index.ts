@@ -71,6 +71,210 @@ function safeEqual(a: string, b: string): boolean {
   }
 }
 
+type SiteSettingsData = {
+  siteName?: string
+  contactEmail?: string
+  emailNotifications?: boolean
+  bookingConfirmations?: boolean
+}
+
+type BookingEmailState = {
+  confirmation_email_sent_at: string | null
+  confirmation_email_error: string | null
+}
+
+let bookingsReady = false
+async function ensureBookingsTable() {
+  if (bookingsReady) return
+  await db.unsafe(`
+    CREATE TABLE IF NOT EXISTS bookings (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      property_id uuid NOT NULL REFERENCES properties ON DELETE RESTRICT,
+      guest_id uuid,
+      check_in date NOT NULL,
+      check_out date NOT NULL,
+      guests_count integer NOT NULL DEFAULT 1,
+      nights integer GENERATED ALWAYS AS (check_out - check_in) STORED,
+      base_price numeric(10, 2) NOT NULL DEFAULT 0,
+      cleaning_fee numeric(10, 2) DEFAULT 0,
+      service_fee numeric(10, 2) DEFAULT 0,
+      total_price numeric(10, 2) NOT NULL DEFAULT 0,
+      status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'cancelled', 'completed')),
+      payment_status text NOT NULL DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'authorized', 'paid', 'refunded', 'failed')),
+      payment_intent_id text,
+      payment_method text DEFAULT 'stripe' CHECK (payment_method IN ('stripe', 'paypal')),
+      special_requests text DEFAULT '',
+      guest_name text,
+      guest_email text,
+      confirmation_email_sent_at timestamptz,
+      confirmation_email_error text,
+      created_at timestamptz DEFAULT now(),
+      updated_at timestamptz DEFAULT now()
+    )
+  `)
+  await db.unsafe(`ALTER TABLE bookings ALTER COLUMN guest_id DROP NOT NULL`)
+  await db.unsafe(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS confirmation_email_sent_at timestamptz`)
+  await db.unsafe(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS confirmation_email_error text`)
+  bookingsReady = true
+}
+
+async function loadSiteSettings(): Promise<SiteSettingsData> {
+  await ensureSiteSettingsTable()
+  const [row] = await db<{ data: Record<string, unknown> }[]>`
+    SELECT data FROM site_settings WHERE id = 1
+  `
+  const data = row?.data ?? {}
+  return {
+    siteName: typeof data.siteName === 'string' ? data.siteName : undefined,
+    contactEmail: typeof data.contactEmail === 'string' ? data.contactEmail : undefined,
+    emailNotifications: typeof data.emailNotifications === 'boolean' ? data.emailNotifications : true,
+    bookingConfirmations: typeof data.bookingConfirmations === 'boolean' ? data.bookingConfirmations : true,
+  }
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
+}
+
+function buildBookingEmailHtml(params: {
+  booking: Booking
+  property: Property
+  siteName: string
+  recipientLabel: 'guest' | 'internal'
+}): string {
+  const { booking, property, siteName, recipientLabel } = params
+  const title = recipientLabel === 'guest'
+    ? 'Your booking is confirmed'
+    : `New confirmed booking for ${escapeHtml(property.title)}`
+
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;background:#f8fafc;padding:24px">
+      <div style="max-width:640px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:32px">
+        <p style="margin:0 0 12px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#64748b">${escapeHtml(siteName)}</p>
+        <h1 style="margin:0 0 16px;font-size:28px;color:#0f172a">${title}</h1>
+        <p style="margin:0 0 20px;color:#334155">${recipientLabel === 'guest'
+          ? 'Your payment was successful and your reservation is now confirmed.'
+          : 'A guest has completed payment and the reservation is recorded in the system.'}</p>
+        <div style="border:1px solid #e2e8f0;border-radius:14px;padding:20px;margin-bottom:20px;background:#f8fafc">
+          <p style="margin:0 0 8px"><strong>Property:</strong> ${escapeHtml(property.title)}</p>
+          <p style="margin:0 0 8px"><strong>Dates:</strong> ${escapeHtml(String(booking.check_in))} to ${escapeHtml(String(booking.check_out))}</p>
+          <p style="margin:0 0 8px"><strong>Guests:</strong> ${booking.guests_count}</p>
+          <p style="margin:0 0 8px"><strong>Total:</strong> ${escapeHtml(formatCurrency(booking.total_price))}</p>
+          <p style="margin:0"><strong>Booking reference:</strong> ${escapeHtml(booking.id)}</p>
+        </div>
+        <p style="margin:0;color:#475569;font-size:14px">If you need assistance, reply to this email and our team will help.</p>
+      </div>
+    </div>
+  `
+}
+
+function buildBookingEmailText(params: {
+  booking: Booking
+  property: Property
+  siteName: string
+  recipientLabel: 'guest' | 'internal'
+}): string {
+  const { booking, property, siteName, recipientLabel } = params
+  const lines = [
+    siteName,
+    recipientLabel === 'guest'
+      ? 'Your booking is confirmed.'
+      : `New confirmed booking for ${property.title}.`,
+    '',
+    `Property: ${property.title}`,
+    `Dates: ${booking.check_in} to ${booking.check_out}`,
+    `Guests: ${booking.guests_count}`,
+    `Total: ${formatCurrency(booking.total_price)}`,
+    `Booking reference: ${booking.id}`,
+  ]
+  return lines.join('\n')
+}
+
+async function sendResendEmail(payload: {
+  to: string
+  subject: string
+  html: string
+  text: string
+}) {
+  const apiKey = process.env.RESEND_API_KEY ?? ''
+  const from = process.env.RESEND_FROM_EMAIL ?? ''
+  const fromName = process.env.RESEND_FROM_NAME ?? 'Paul Estates'
+  if (!apiKey || !from) {
+    return { sent: false, skipped: 'resend-not-configured' as const }
+  }
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: `${fromName} <${from}>`,
+      to: [payload.to],
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text,
+    }),
+  })
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({})) as { message?: string; error?: string }
+    throw new Error(data.message ?? data.error ?? 'Failed to send confirmation email')
+  }
+
+  return { sent: true as const }
+}
+
+async function sendBookingConfirmationEmails(booking: Booking, property: Property) {
+  const settings = await loadSiteSettings()
+  if (!settings.emailNotifications || !settings.bookingConfirmations) {
+    return { sent: false, skipped: 'disabled-by-settings' as const }
+  }
+
+  const recipients = [booking.guest_email?.trim(), settings.contactEmail?.trim()]
+    .filter((value): value is string => !!value)
+  if (recipients.length === 0) {
+    return { sent: false, skipped: 'missing-recipients' as const }
+  }
+
+  const siteName = settings.siteName?.trim() || 'Paul Estates'
+  const results: Array<{ to: string; sent: boolean; error?: string }> = []
+
+  for (const recipient of recipients) {
+    try {
+      const recipientLabel = recipient === booking.guest_email?.trim() ? 'guest' : 'internal'
+      const subject = recipientLabel === 'guest'
+        ? `Booking confirmed: ${property.title}`
+        : `New booking confirmed: ${property.title}`
+      const response = await sendResendEmail({
+        to: recipient,
+        subject,
+        html: buildBookingEmailHtml({ booking, property, siteName, recipientLabel }),
+        text: buildBookingEmailText({ booking, property, siteName, recipientLabel }),
+      })
+      results.push({ to: recipient, sent: response.sent })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown email error'
+      results.push({ to: recipient, sent: false, error: message })
+    }
+  }
+
+  return {
+    sent: results.some(result => result.sent),
+    results,
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Password hashing (scrypt — no external dependency)
 // Stored as `scrypt$<saltHex>$<hashHex>`.
@@ -254,13 +458,50 @@ app.get('/api/bookings/:id', async (c) => {
 })
 
 app.post('/api/bookings', async (c) => {
+  await ensureBookingsTable()
   const body = await c.req.json<Partial<Booking>>()
   const {
-    property_id, guest_id, check_in, check_out, guests_count,
+    property_id, check_in, check_out, guests_count,
     base_price, cleaning_fee, service_fee, total_price,
     status, payment_status, payment_method, payment_intent_id,
     special_requests, guest_name, guest_email,
   } = body
+
+  if (!property_id || !check_in || !check_out) {
+    return c.json({ error: 'Missing booking details' }, 400)
+  }
+
+  const [property] = await db<Property[]>`SELECT * FROM properties WHERE id = ${property_id}`
+  if (!property) return c.json({ error: 'Property not found' }, 404)
+
+  const normalizedPaymentIntentId = typeof payment_intent_id === 'string' ? payment_intent_id : null
+  const normalizedGuestEmail = typeof guest_email === 'string' ? guest_email.trim() : ''
+
+  if ((payment_status === 'paid' || payment_status === 'authorized') && !normalizedGuestEmail) {
+    return c.json({ error: 'Guest email is required for paid bookings' }, 400)
+  }
+
+  if (normalizedPaymentIntentId) {
+    const [existingBooking] = await db<(Booking & BookingEmailState)[]>`
+      SELECT * FROM bookings WHERE payment_intent_id = ${normalizedPaymentIntentId} LIMIT 1
+    `
+    if (existingBooking) {
+      if (
+        !existingBooking.confirmation_email_sent_at &&
+        (existingBooking.payment_status === 'paid' || existingBooking.payment_status === 'authorized')
+      ) {
+        const confirmationResult = await sendBookingConfirmationEmails(existingBooking, property)
+        if (confirmationResult.sent) {
+          await db`
+            UPDATE bookings
+            SET confirmation_email_sent_at = now(), confirmation_email_error = null
+            WHERE id = ${existingBooking.id}
+          `
+        }
+      }
+      return c.json(existingBooking)
+    }
+  }
 
   const [booking] = await db<Booking[]>`
     INSERT INTO bookings (
@@ -269,13 +510,25 @@ app.post('/api/bookings', async (c) => {
       status, payment_status, payment_method, payment_intent_id,
       special_requests, guest_name, guest_email
     ) VALUES (
-      ${property_id!}, ${guest_id ?? null}, ${check_in!}, ${check_out!}, ${guests_count ?? 1},
+      ${property_id}, ${null}, ${check_in}, ${check_out}, ${guests_count ?? 1},
       ${base_price ?? 0}, ${cleaning_fee ?? 0}, ${service_fee ?? 0}, ${total_price ?? 0},
       ${status ?? 'pending'}, ${payment_status ?? 'unpaid'},
       ${payment_method ?? 'stripe'}, ${payment_intent_id ?? null},
-      ${special_requests ?? ''}, ${guest_name ?? null}, ${guest_email ?? null}
+      ${special_requests ?? ''}, ${guest_name ?? null}, ${normalizedGuestEmail || null}
     ) RETURNING *
   `
+
+  if (booking && (booking.payment_status === 'paid' || booking.payment_status === 'authorized')) {
+    const confirmationResult = await sendBookingConfirmationEmails(booking, property)
+    if (confirmationResult.sent) {
+      await db`
+        UPDATE bookings
+        SET confirmation_email_sent_at = now(), confirmation_email_error = null
+        WHERE id = ${booking.id}
+      `
+    }
+  }
+
   return c.json(booking, 201)
 })
 

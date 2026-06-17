@@ -224,7 +224,7 @@ CREATE POLICY "Property owners can delete availability"
 CREATE TABLE IF NOT EXISTS bookings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   property_id uuid NOT NULL REFERENCES properties ON DELETE RESTRICT,
-  guest_id uuid NOT NULL REFERENCES auth.users ON DELETE RESTRICT,
+  guest_id uuid,
   check_in date NOT NULL,
   check_out date NOT NULL,
   guests_count integer NOT NULL DEFAULT 1,
@@ -240,6 +240,8 @@ CREATE TABLE IF NOT EXISTS bookings (
   special_requests text DEFAULT '',
   guest_name text,
   guest_email text,
+  confirmation_email_sent_at timestamptz,
+  confirmation_email_error text,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );

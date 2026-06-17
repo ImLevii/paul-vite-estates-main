@@ -32,6 +32,9 @@ const keys = [
   'PAYPAL_CLIENT_ID',
   'PAYPAL_CLIENT_SECRET',
   'PAYPAL_ENV',
+  'RESEND_API_KEY',
+  'RESEND_FROM_EMAIL',
+  'RESEND_FROM_NAME',
 ]
 
 const targets = ['production']

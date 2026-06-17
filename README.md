@@ -25,8 +25,18 @@ That script pushes these values to both `production` and `preview` when they exi
 - `VITE_API_URL`
 - `VITE_STRIPE_PUBLISHABLE_KEY`
 - `VITE_PAYPAL_CLIENT_ID`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PUBLISHABLE_KEY`
+- `PAYPAL_CLIENT_ID`
+- `PAYPAL_CLIENT_SECRET`
+- `PAYPAL_ENV`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `RESEND_FROM_NAME`
 
 `VITE_API_URL` is optional when the frontend and API are deployed together on Vercel, because the client can call the same-origin `/api` routes directly.
+
+Booking confirmations are now sent from the API after a successful Stripe or PayPal payment. The server uses Resend for transactional email delivery and includes the admin contact email from Settings as the internal confirmation recipient.
 
 After the env vars are synced, deploy with:
 

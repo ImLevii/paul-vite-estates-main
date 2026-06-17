@@ -47,7 +47,7 @@ export type PropertyPhoto = {
 export type Booking = {
   id: string
   property_id: string
-  guest_id: string
+  guest_id: string | null
   check_in: string
   check_out: string
   guests_count: number
@@ -63,6 +63,8 @@ export type Booking = {
   special_requests: string
   guest_name: string | null
   guest_email: string | null
+  confirmation_email_sent_at: string | null
+  confirmation_email_error: string | null
   created_at: string
   updated_at: string
 }
