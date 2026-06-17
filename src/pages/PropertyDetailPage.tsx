@@ -14,6 +14,7 @@ import { type Property } from '@/lib/supabase'
 import { api } from '@/lib/api'
 import { useLiveData } from '@/hooks/use-live-data'
 import { getPropertyImage } from '@/lib/constants'
+import { formatClockTime } from '@/lib/datetime'
 import { addDays, differenceInDays, format, isBefore, startOfDay } from 'date-fns'
 import type { DateRange } from 'react-day-picker'
 
@@ -100,7 +101,7 @@ export function PropertyDetailPage() {
       <div className="min-h-screen bg-background">
         <Header />
         <div className="container mx-auto max-w-7xl px-4 py-8">
-          <Skeleton className="h-[400px] w-full rounded-2xl" />
+          <Skeleton className="h-100 w-full rounded-2xl" />
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-4">
               <Skeleton className="h-8 w-2/3" />
@@ -231,14 +232,14 @@ export function PropertyDetailPage() {
                   <Clock className="size-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Check-in</p>
-                    <p className="text-sm text-muted-foreground">After {property.check_in_time}</p>
+                    <p className="text-sm text-muted-foreground">After {formatClockTime(property.check_in_time)}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <Clock className="size-5 text-muted-foreground" />
                   <div>
                     <p className="text-sm font-medium">Check-out</p>
-                    <p className="text-sm text-muted-foreground">Before {property.check_out_time}</p>
+                    <p className="text-sm text-muted-foreground">Before {formatClockTime(property.check_out_time)}</p>
                   </div>
                 </div>
                 {property.min_stay_nights > 1 && (

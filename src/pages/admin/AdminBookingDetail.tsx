@@ -14,7 +14,7 @@ import {
 import { type Booking, type Property } from '@/lib/supabase'
 import { api } from '@/lib/api'
 import { BOOKING_STATUSES, PAYMENT_STATUSES } from '@/lib/constants'
-import { format, parseISO } from 'date-fns'
+import { formatDateInAppTimeZone, formatDateTimeInAppTimeZone } from '@/lib/datetime'
 import { toast } from 'sonner'
 
 export function AdminBookingDetail() {
@@ -161,11 +161,11 @@ export function AdminBookingDetail() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Check-in</p>
-                  <p className="font-medium">{format(parseISO(booking.check_in), 'EEEE, MMM d, yyyy')}</p>
+                  <p className="font-medium">{formatDateInAppTimeZone(booking.check_in, { withWeekday: true })}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Check-out</p>
-                  <p className="font-medium">{format(parseISO(booking.check_out), 'EEEE, MMM d, yyyy')}</p>
+                  <p className="font-medium">{formatDateInAppTimeZone(booking.check_out, { withWeekday: true })}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Duration</p>
@@ -265,7 +265,7 @@ export function AdminBookingDetail() {
               {booking.payment_intent_id && (
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>Payment ID</span>
-                  <span className="truncate max-w-[120px] font-mono">{booking.payment_intent_id}</span>
+                  <span className="max-w-30 truncate font-mono">{booking.payment_intent_id}</span>
                 </div>
               )}
             </CardContent>
@@ -279,11 +279,11 @@ export function AdminBookingDetail() {
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Created</span>
-                <span>{format(parseISO(booking.created_at), 'MMM d, yyyy HH:mm')}</span>
+                <span>{formatDateTimeInAppTimeZone(booking.created_at)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Updated</span>
-                <span>{format(parseISO(booking.updated_at), 'MMM d, yyyy HH:mm')}</span>
+                <span>{formatDateTimeInAppTimeZone(booking.updated_at)}</span>
               </div>
             </CardContent>
           </Card>

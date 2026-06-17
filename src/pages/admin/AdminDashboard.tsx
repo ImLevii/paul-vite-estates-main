@@ -11,6 +11,7 @@ import { type Property, type Booking } from '@/lib/supabase'
 import { api } from '@/lib/api'
 import { useLiveData } from '@/hooks/use-live-data'
 import { BOOKING_STATUSES } from '@/lib/constants'
+import { formatDateInAppTimeZone } from '@/lib/datetime'
 import { format, parseISO } from 'date-fns'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid
@@ -320,7 +321,7 @@ export function AdminDashboard() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{booking.guest_name || booking.guest_email || 'Guest'}</p>
                         <p className="text-xs text-muted-foreground">
-                          {format(parseISO(booking.check_in), 'MMM d')} – {format(parseISO(booking.check_out), 'MMM d, yyyy')}
+                          {formatDateInAppTimeZone(booking.check_in, { withYear: false })} – {formatDateInAppTimeZone(booking.check_out)}
                         </p>
                       </div>
                       <div className="shrink-0 text-right">

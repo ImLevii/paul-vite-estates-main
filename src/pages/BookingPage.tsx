@@ -15,7 +15,8 @@ import { StripePayment } from '@/components/payments/StripePayment'
 import { PayPalCheckout } from '@/components/payments/PayPalCheckout'
 import { StripeMark, PayPalMark } from '@/components/payments/PaymentBrands'
 import { getPropertyImage } from '@/lib/constants'
-import { differenceInDays, format, parseISO } from 'date-fns'
+import { formatDateInAppTimeZone } from '@/lib/datetime'
+import { differenceInDays, parseISO } from 'date-fns'
 import { toast } from 'sonner'
 
 export function BookingPage() {
@@ -375,11 +376,11 @@ export function BookingPage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Check-in</span>
-                    <span className="font-medium">{checkIn && format(parseISO(checkIn), 'MMM d, yyyy')}</span>
+                    <span className="font-medium">{checkIn && formatDateInAppTimeZone(checkIn)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Check-out</span>
-                    <span className="font-medium">{checkOut && format(parseISO(checkOut), 'MMM d, yyyy')}</span>
+                    <span className="font-medium">{checkOut && formatDateInAppTimeZone(checkOut)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Guests</span>

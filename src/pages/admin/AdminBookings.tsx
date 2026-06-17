@@ -15,7 +15,7 @@ import { type Booking } from '@/lib/supabase'
 import { api, type BookingWithProperty } from '@/lib/api'
 import { BOOKING_STATUSES, PAYMENT_STATUSES } from '@/lib/constants'
 import { getAdminRole } from '@/lib/admin-auth'
-import { format, parseISO } from 'date-fns'
+import { formatDateInAppTimeZone } from '@/lib/datetime'
 import { toast } from 'sonner'
 
 type BookingRow = BookingWithProperty
@@ -191,7 +191,7 @@ export function AdminBookings() {
                       <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <CalendarDays className="size-3.5" />
-                          {format(parseISO(booking.check_in), 'MMM d')} – {format(parseISO(booking.check_out), 'MMM d, yyyy')}
+                          {formatDateInAppTimeZone(booking.check_in, { withYear: false })} – {formatDateInAppTimeZone(booking.check_out)}
                         </span>
                         <span>{booking.nights} night{booking.nights !== 1 ? 's' : ''}</span>
                         <span>{booking.guests_count} guest{booking.guests_count !== 1 ? 's' : ''}</span>
